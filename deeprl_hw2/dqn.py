@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import gym
 
 """Main DQN agent."""
 
@@ -199,7 +200,7 @@ class DQNAgent:
 
             if i > self.num_burn_in:
                 loss_val = self.update_policy()
-                print "Loss val : " + str(loss_val)
+                print str(i) + "th Loss val : " + str(loss_val)
 
             curr_state = next_state
 
@@ -239,21 +240,27 @@ class DQNAgent:
         visually inspect your policy.
         """
 
-        while 1:
+        while num_episodes > 0:
             env = gym.make('SpaceInvaders-v0')
 
-            curr_state = np.stack([env.step(0)[0] for i in xrange(4)], axis=2)
-            curr_state = preprocessor.process_state_for_network(curr_state)
+            # Get the initial state
+            curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
+                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
+            curr_state = np.expand_dims(curr_state, axis = 0)
             
+            is_terminal = False
             while not is_terminal:
                 env.render()
                 action = np.argmax(self.sess.run(self.q_values, feed_dict = {self.state:curr_state}))
                 next_state, reward, is_terminal, _ = env.step(action)
 
-                next_state = preprocessor.process_state_for_network(next_state)
+                next_state = self.preprocessor.process_state_for_network(next_state)
                 next_state = np.expand_dims(next_state, axis = 2)
+                next_state = np.expand_dims(next_state, axis = 0)
                 # append the next state to the last 3 frames in currstate to form the new state
-                next_state = np.append(curr_state[:,:,1:], next_state, axis = 2)
+                next_state = np.append(curr_state[:,:,:,1:], next_state, axis = 3)
 
                 curr_state = next_state
+
+            num_episodes -= 1
 

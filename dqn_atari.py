@@ -19,8 +19,8 @@ from deeprl_hw2.policy import *
 
 import gym
 
-def create_model(window, input_shape, num_actions,
-                 model_name='q_network'):  # noqa: D103
+def create_model_deep(window, input_shape, num_actions,
+                 model_name='q_network_deep'):  # noqa: D103
     """Create the Q-network model.
 
     Use Keras to construct a keras.models.Model instance (you can also
@@ -49,10 +49,8 @@ def create_model(window, input_shape, num_actions,
       The Q-model.
     """
 
-    input_shape = (None, input_shape[0], input_shape[1], window)
+    input_shape = (input_shape[0], input_shape[1], window)
 
-    input_shape = (80, 80, 4)
-    num_actions = 6
     state = Input(shape=input_shape)
     # First convolutional layer
     x = Convolution2D(16, 8, 8, border_mode='valid', activation='relu')(state)
@@ -62,6 +60,20 @@ def create_model(window, input_shape, num_actions,
     x = Flatten()(x)
     x = Dense(256, activation='relu')(x)
     # output layer
+    y_pred = Dense(num_actions)(x)
+
+    model = Model(input=state, output=y_pred)
+
+    return model
+
+def create_model_linear(window, input_shape, num_actions,
+                 model_name='q_network_linear'):
+
+    input_shape = (input_shape[0], input_shape[1], window)
+    state = Input(shape=input_shape)
+    x = Flatten()(state)
+    x = Dense(256, activation='relu')(x)
+
     y_pred = Dense(num_actions)(x)
 
     model = Model(input=state, output=y_pred)
@@ -118,8 +130,8 @@ def main():  # noqa: D103
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_iterations', default=1000, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--max_episode_length', default=100, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_iterations', default=200, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--max_episode_length', default=200, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--train_freq', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
@@ -138,7 +150,7 @@ def main():  # noqa: D103
     num_actions = env.action_space.n
 
     preprocessor = AtariPreprocessor(args.new_size)
-    q_network = create_model(args.window, args.new_size, num_actions)
+    q_network = create_model_deep(args.window, args.new_size, num_actions)
     memory = ReplayMemory(args.replay_buffer_size, args.window)
     policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 100)
     sess = tf.Session()
@@ -149,6 +161,7 @@ def main():  # noqa: D103
     optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
     dqn_agent.compile(optimizer, mean_huber_loss)
     dqn_agent.fit(env, args.num_iterations, args.max_episode_length)
+    dqn_agent.evaluate(env, 10)
 
     # while 1:
     #     env = gym.make('SpaceInvaders-v0')
