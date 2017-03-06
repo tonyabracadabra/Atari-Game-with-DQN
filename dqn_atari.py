@@ -6,12 +6,9 @@ import random
 
 import numpy as np
 import tensorflow as tf
-from keras.layers import (Activation, Convolution2D, Dense, Flatten, Input,
-                          Permute)
+from keras.layers import (Activation, Convolution2D, Dense, Flatten, Input, Permute)
 
 from keras.models import Model
-from keras.optimizers import Adam
-from keras.optimizers import Adam
 
 import deeprl_hw2 as tfrl
 from deeprl_hw2.dqn import DQNAgent
@@ -149,7 +146,7 @@ def main():  # noqa: D103
              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, sess)
 
 
-    optimizer = Adam(lr=args.alpha, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+    optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
     dqn_agent.compile(optimizer, mean_huber_loss)
     dqn_agent.fit(env, args.num_iterations, args.max_episode_length)
 

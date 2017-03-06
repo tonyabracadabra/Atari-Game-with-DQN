@@ -65,7 +65,6 @@ class DQNAgent:
         self.num_burn_in = num_burn_in
         self.batch_size = batch_size
         self.sess = sess
-        self.init = tf.global_variables_initializer()
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -88,11 +87,11 @@ class DQNAgent:
         # Placeholder that we want to feed the value in, just one value
         self.y_true = tf.placeholder(tf.float32, [self.batch_size, ])
         # Placeholder that specify which action
-        self.action = tf.placeholder(tf.int8, [self.batch_size,])
+        self.action = tf.placeholder(tf.int32, [self.batch_size,])
         # the output of the q_network is y_pred
-        y_pred = tf.stack([self.q_values[i, self.action[i]] for i in xrange(self.batch_size)])
+        self.y_pred = tf.stack([self.q_values[i, self.action[i]] for i in xrange(self.batch_size)])
 
-        self.loss = loss_func(y_true, y_pred)
+        self.loss = loss_func(self.y_true, self.y_pred)
 
         self.optimizer = optimizer.minimize(self.loss)
 
@@ -153,12 +152,11 @@ class DQNAgent:
 
         samples = self.memory.sample(self.batch_size)
         # stack to the first dimension as batch size, which is gooood
-        states = np.stack([sample.state for sample in samples])
+        states = np.array([np.squeeze(sample.state) for sample in samples])
         actions = np.stack([sample.action for sample in samples])
-        y_vals = map(self._calc_y, samples)
+        y_vals = np.stack(map(self._calc_y, samples))
 
-        _, loss_val = self.sess.run([self.optimizer, self.loss], feed_dict={self.state:states, \
-                                    self.y_true:y_vals, self.action:actions})
+        _, loss_val = self.sess.run([self.optimizer, self.loss], feed_dict={self.state:states, self.y_true:y_vals, self.action:actions})
 
         return loss_val
 
@@ -188,7 +186,8 @@ class DQNAgent:
           resets. Can help exploration.
         """
 
-        self.sess.run(self.init)
+        init = tf.global_variables_initializer()
+        self.sess.run(init)
 
         # Get the initial state
         curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
