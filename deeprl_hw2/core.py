@@ -1,6 +1,6 @@
 """Core classes."""
 
-
+import random
 
 class Sample:
     """Represents a reinforcement learning sample.
@@ -32,7 +32,12 @@ class Sample:
     is_terminal: boolean
       True if this action finished the episode. False otherwise.
     """
-    pass
+    def __init__(self, state, action, reward, next_state, is_terminal):
+        self.state = state
+        self.action = action
+        self.reward = reward
+        self.next_state = next_state
+        self.is_terminal = is_terminal
 
 
 class Preprocessor:
@@ -205,16 +210,39 @@ class ReplayMemory:
         We recommend using a list as a ring buffer. Just track the
         index where the next sample should be inserted in the list.
         """
-        pass
+        self.max_size = max_size
+        self.window_length = window_length
+        self.index = 0
+        self._samples = []
 
     def append(self, state, action, reward):
-        raise NotImplementedError('This method should be overridden')
+
+
+        sample = Sample(state, action, reward, next_state, is_terminal)
+
+        if len(self._samples) == self.max_size:
+            self._samples[self.index]= sample
+        else:
+            self._samples.append(sample)
+        self.index= (self.index + 1) % self.max_size
 
     def end_episode(self, final_state, is_terminal):
-        raise NotImplementedError('This method should be overridden')
+
 
     def sample(self, batch_size, indexes=None):
-        raise NotImplementedError('This method should be overridden')
+        random_indexes = random.sample(xrange(len(self._samples)), batch_size)
+
+        return [self.samples[i] for i in random_indexes]
 
     def clear(self):
-        raise NotImplementedError('This method should be overridden')
+        self._samples = []
+
+    def __iter__(self):
+        return iter(self._samples)
+
+    def __getitem__(self, key):
+        return self._samples[key]
+
+    def __len__(self):
+        return len(self._samples)
+

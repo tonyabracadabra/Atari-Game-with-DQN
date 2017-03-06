@@ -1,3 +1,5 @@
+import tensorflow as tf
+
 """Main DQN agent."""
 
 class DQNAgent:
@@ -47,8 +49,21 @@ class DQNAgent:
                  target_update_freq,
                  num_burn_in,
                  train_freq,
-                 batch_size):
-        pass
+                 batch_size,
+                 sess):
+
+        self.q_network = q_network
+        self.q_values = q_network.output
+        self.state = q_network.input
+        self.preprocessor = preprocessor
+        self.memory = memory
+        self.gamma = gamma
+        self.policy = policy
+        self.target_update_freq = target_update_freq
+        self.train_freq = train_freq
+        self.num_burn_in = num_burn_in
+        self.batch_size = batch_size
+        self.sess = sess
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -67,7 +82,17 @@ class DQNAgent:
         keras.optimizers.Optimizer class. Specifically the Adam
         optimizer.
         """
-        pass
+
+        # Placeholder that we want to feed the value in, just one value
+        self.y_true = tf.placeholder(tf.float32, [None,])
+        # Placeholder that specify which action
+        self.action = tf.placeholder(tf.int8)
+        # the output of the q_network is y_pred
+        y_pred = q_values[:, action]
+
+        loss = loss_func(y_true, y_pred)
+
+        optimizer = optimizer.minimize(loss)
 
     def calc_q_values(self, state):
         """Given a state (or batch of states) calculate the Q-values.
@@ -78,7 +103,9 @@ class DQNAgent:
         ------
         Q-values for the state(s)
         """
-        pass
+        q_values_val = sess.run(self.q_values, feed_dict={self.state:state})
+
+        return q_values_val
 
     def select_action(self, state, **kwargs):
         """Select the action based on the current state.
@@ -101,7 +128,10 @@ class DQNAgent:
         --------
         selected action
         """
-        pass
+
+        q_values_val = calc_q_values(state)
+
+        return policy.select_action(q_values_val)
 
     def update_policy(self):
         """Update your policy.
@@ -118,6 +148,7 @@ class DQNAgent:
         You might want to return the loss and other metrics as an
         output. They can help you monitor how training is going.
         """
+
         pass
 
     def fit(self, env, num_iterations, max_episode_length=None):
@@ -145,7 +176,36 @@ class DQNAgent:
           How long a single episode should last before the agent
           resets. Can help exploration.
         """
-        pass
+
+        # Get the initial state
+        curr_state = np.stack([env.step(0)[0] for i in xrange(4)], axis=2)
+        curr_state = preprocessor.process_state_for_network(curr_state)
+
+        for i in xrange(num_iterations):
+            _append_transition(curr_state)
+
+            y_val = reward
+            if not is_terminal:
+                y_val += self.gamma * np.max(self.sess.run(self.q_values, feed_dict={self.state:state}))
+
+            _, loss_val = self.sess.run([optimizer, loss], feed_dict={self.state:state, \
+                                    self.y_true:y_val, self.action=action})
+
+            print "Loss val : " + str(loss_val)
+
+            curr_state = next_state
+
+    def _append_transition(curr_state):
+        action = self.select_action(curr_state)
+        # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
+        next_state, reward, is_terminal, _ = env.step(action)
+        # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess φ_{t+1} = φ(s_{t+1})
+        next_state = preprocessor.process_state_for_network(next_state)
+        next_state = np.expand_dims(next_state, axis = 2)
+        # append the next state to the last 3 frames in currstate to form the new state
+        next_state = np.append(curr_state[:,:,1:], next_state, axis = 2)
+
+        self.memory.append(curr_state, action, reward, next_state, is_terminal)
 
     def evaluate(self, env, num_episodes, max_episode_length=None):
         """Test your agent with a provided environment.
@@ -160,4 +220,25 @@ class DQNAgent:
         You can also call the render function here if you want to
         visually inspect your policy.
         """
-        pass
+
+        while 1:
+          env = gym.make('SpaceInvaders-v0')
+
+          curr_state = np.stack([env.step(0)[0] for i in xrange(4)], axis=2)
+          curr_state = preprocessor.process_state_for_network(curr_state)
+          
+          while not is_terminal:
+              env.render()
+              action = np.argmax(self.sess.run(self.q_values, feed_dict = {self.state:curr_state}))
+              next_state, reward, is_terminal, _ = env.step(action)
+
+              next_state = preprocessor.process_state_for_network(next_state)
+              next_state = np.expand_dims(next_state, axis = 2)
+              # append the next state to the last 3 frames in currstate to form the new state
+              next_state = np.append(curr_state[:,:,1:], next_state, axis = 2)
+
+              curr_state = next_state
+
+
+
+

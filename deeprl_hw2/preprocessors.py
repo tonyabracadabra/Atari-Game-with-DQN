@@ -28,7 +28,7 @@ class HistoryPreprocessor(Preprocessor):
 
     def process_state_for_network(self, state):
         """You only want history when you're deciding the current action to take."""
-        pass
+
 
     def reset(self):
         """Reset the history sequence.
@@ -78,7 +78,7 @@ class AtariPreprocessor(Preprocessor):
     """
 
     def __init__(self, new_size):
-        pass
+        self.new_width, self.new_height = new_size
 
     def process_state_for_memory(self, state):
         """Scale, convert to greyscale and store as uint8.
@@ -90,7 +90,9 @@ class AtariPreprocessor(Preprocessor):
         We recommend using the Python Image Library (PIL) to do the
         image conversions.
         """
-        pass
+        converted_img = Image.fromarray(state).resize((self.new_width, self.new_height)).convert('L')
+
+        return np.array(converted_img)
 
     def process_state_for_network(self, state):
         """Scale, convert to greyscale and store as float32.
@@ -98,7 +100,9 @@ class AtariPreprocessor(Preprocessor):
         Basically same as process state for memory, but this time
         outputs float32 images.
         """
-        pass
+        uint8_img = self.process_state_for_memory(state)
+
+        return uint8_img.astype('float32')
 
     def process_batch(self, samples):
         """The batches from replay memory will be uint8, convert to float32.
@@ -107,7 +111,7 @@ class AtariPreprocessor(Preprocessor):
         samples from the replay memory. Meaning you need to convert
         both state and next state values.
         """
-        pass
+        return map(process_state_for_network, samples)
 
     def process_reward(self, reward):
         """Clip reward between -1 and 1."""
@@ -115,7 +119,7 @@ class AtariPreprocessor(Preprocessor):
 
 
 class PreprocessorSequence(Preprocessor):
-    """You may find it useful to stack multiple prepcrocesosrs (such as the History and the AtariPreprocessor).
+    """You may find it useful to stack multiple preprocesosrs (such as the History and the AtariPreprocessor).
 
     You can easily do this by just having a class that calls each preprocessor in succession.
 

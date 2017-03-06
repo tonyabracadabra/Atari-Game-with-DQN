@@ -6,6 +6,7 @@ in your code.
 """
 import numpy as np
 import attr
+import random
 
 
 class Policy:
@@ -92,7 +93,7 @@ class GreedyEpsilonPolicy(Policy):
      over time.
     """
     def __init__(self, epsilon):
-        pass
+        self.epsilon = epsilon
 
     def select_action(self, q_values, **kwargs):
         """Run Greedy-Epsilon for the given Q-values.
@@ -108,9 +109,11 @@ class GreedyEpsilonPolicy(Policy):
         int:
           The action index chosen.
         """
-
-    pass
-
+        rand = random.random()
+        if rand < epsilon:
+            return random.randint(0, len(q_values)-1)
+        else:
+            return np.argmax(q_values)
 
 class LinearDecayGreedyEpsilonPolicy(Policy):
     """Policy with a parameter that decays linearly.
@@ -129,11 +132,16 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
 
     """
 
-    def __init__(self, policy, attr_name, start_value, end_value,
+    def __init__(self, start_value, end_value,
                  num_steps):  # noqa: D102
-        pass
 
-    def select_action(self, **kwargs):
+        self.start_value
+        self.end_value
+        self.num_steps = num_steps
+        self.decrement = float(end_value - start_value) / num_steps
+        self.curr_steps = 0
+
+    def select_action(self, q_values, is_training, **kwargs):
         """Decay parameter and select action.
 
         Parameters
@@ -148,8 +156,18 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
         Any:
           Selected action.
         """
-        pass
+
+        if self.curr_steps < self.num_steps and is_training:
+            self.curr_steps += 1
+            self.epsilon += self.decrement
+
+        rand = random.random()
+        if rand < self.epsilon:
+            return random.randint(0, len(q_values)-1)
+        else:
+            return np.argmax(q_values)
+        
 
     def reset(self):
         """Start the decay over at the start value."""
-        pass
+        self.curr_steps = 0
