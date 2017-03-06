@@ -215,9 +215,7 @@ class ReplayMemory:
         self.index = 0
         self._samples = []
 
-    def append(self, state, action, reward):
-
-
+    def append(self, state, action, reward, next_state, is_terminal):
         sample = Sample(state, action, reward, next_state, is_terminal)
 
         if len(self._samples) == self.max_size:
@@ -227,7 +225,7 @@ class ReplayMemory:
         self.index= (self.index + 1) % self.max_size
 
     def end_episode(self, final_state, is_terminal):
-
+        pass
 
     def sample(self, batch_size, indexes=None):
         random_indexes = random.sample(xrange(len(self._samples)), batch_size)

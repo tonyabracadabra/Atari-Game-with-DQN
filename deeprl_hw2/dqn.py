@@ -182,18 +182,25 @@ class DQNAgent:
         curr_state = preprocessor.process_state_for_network(curr_state)
 
         for i in xrange(num_iterations):
-            _append_transition(curr_state)
+            _append_to_memory(curr_state)
 
-            y_val = reward
-            if not is_terminal:
-                y_val += self.gamma * np.max(self.sess.run(self.q_values, feed_dict={self.state:state}))
+            samples = self.memory.sample(self.batch_size)
+            states = np.stack([sample.state for sample in samples])
+            y_vals = map(_calc_y, samples)
 
-            _, loss_val = self.sess.run([optimizer, loss], feed_dict={self.state:state, \
-                                    self.y_true:y_val, self.action=action})
+            _, loss_val = self.sess.run([optimizer, loss], feed_dict={self.state:states, \
+                                    self.y_true:y_vals, self.action=action})
 
             print "Loss val : " + str(loss_val)
 
             curr_state = next_state
+
+    def _calc_y(sample):
+        y_val = sample.reward
+            if not sample.is_terminal:
+                y_val += self.gamma * np.max(self.sess.run(self.q_values, feed_dict={self.state:sample.next_state}))
+
+        return y_val
 
     def _append_transition(curr_state):
         action = self.select_action(curr_state)
