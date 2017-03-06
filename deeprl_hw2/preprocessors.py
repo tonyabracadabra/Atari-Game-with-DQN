@@ -90,7 +90,6 @@ class AtariPreprocessor(Preprocessor):
         We recommend using the Python Image Library (PIL) to do the
         image conversions.
         """
-        print state.shape
         converted_img = Image.fromarray(state, 'RGB').resize((self.new_width, self.new_height)).convert('L')
 
         return np.array(converted_img)

@@ -8,7 +8,9 @@ import numpy as np
 import tensorflow as tf
 from keras.layers import (Activation, Convolution2D, Dense, Flatten, Input,
                           Permute)
+
 from keras.models import Model
+from keras.optimizers import Adam
 from keras.optimizers import Adam
 
 import deeprl_hw2 as tfrl
@@ -118,7 +120,7 @@ def main():  # noqa: D103
     parser.add_argument('--alpha', default=0.0001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=0.05, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_burn_in', default=0.05, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_iterations', default=1000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--max_episode_length', default=100, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--train_freq', default=0.05, help='Exploration probability for epsilon-greedy')
@@ -146,6 +148,9 @@ def main():  # noqa: D103
     dqn_agent = DQNAgent(q_network, preprocessor, memory, policy, args.gamma, \
              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, sess)
 
+
+    optimizer = Adam(lr=args.alpha, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0.0)
+    dqn_agent.compile(optimizer, mean_huber_loss)
     dqn_agent.fit(env, args.num_iterations, args.max_episode_length)
 
     # while 1:

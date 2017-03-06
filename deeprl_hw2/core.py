@@ -230,7 +230,7 @@ class ReplayMemory:
     def sample(self, batch_size, indexes=None):
         random_indexes = random.sample(xrange(len(self._samples)), batch_size)
 
-        return [self.samples[i] for i in random_indexes]
+        return [self._samples[i] for i in random_indexes]
 
     def clear(self):
         self._samples = []

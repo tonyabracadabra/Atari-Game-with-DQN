@@ -65,6 +65,7 @@ class DQNAgent:
         self.num_burn_in = num_burn_in
         self.batch_size = batch_size
         self.sess = sess
+        self.init = tf.global_variables_initializer()
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -85,7 +86,7 @@ class DQNAgent:
         """
 
         # Placeholder that we want to feed the value in, just one value
-        self.y_true = tf.placeholder(tf.float32, [self.batch_size,])
+        self.y_true = tf.placeholder(tf.float32, [self.batch_size, ])
         # Placeholder that specify which action
         self.action = tf.placeholder(tf.int8, [self.batch_size,])
         # the output of the q_network is y_pred
@@ -132,7 +133,7 @@ class DQNAgent:
 
         q_values_val = self.calc_q_values(state)
 
-        return policy.select_action(q_values_val)
+        return self.policy.select_action(q_values_val, True)
 
     def update_policy(self):
         """Update your policy.
@@ -187,15 +188,19 @@ class DQNAgent:
           resets. Can help exploration.
         """
 
+        self.sess.run(self.init)
+
         # Get the initial state
         curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
                               [env.step(0)[0] for i in xrange(4)]), axis=2)
+        curr_state = np.expand_dims(curr_state, axis = 0)
 
         for i in xrange(num_iterations):
-            next_state = self._append_to_memory(curr_state)
-            self.update_policy()
+            next_state = self._append_to_memory(curr_state, env)
 
-            print "Loss val : " + str(loss_val)
+            if i > self.num_burn_in:
+                loss_val = self.update_policy()
+                print "Loss val : " + str(loss_val)
 
             curr_state = next_state
 
@@ -206,15 +211,16 @@ class DQNAgent:
 
         return y_val
 
-    def _append_to_memory(self, curr_state):
+    def _append_to_memory(self, curr_state, env):
         action = self.select_action(curr_state)
         # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
         next_state, reward, is_terminal, _ = env.step(action)
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
         next_state = self.preprocessor.process_state_for_network(next_state)
         next_state = np.expand_dims(next_state, axis = 2)
+        next_state = np.expand_dims(next_state, axis = 0)
         # append the next state to the last 3 frames in currstate to form the new state
-        next_state = np.append(curr_state[:,:,1:], next_state, axis = 2)
+        next_state = np.append(curr_state[:,:,:,1:], next_state, axis = 3)
 
         self.memory.append(curr_state, action, reward, next_state, is_terminal)
 
@@ -235,20 +241,20 @@ class DQNAgent:
         """
 
         while 1:
-          env = gym.make('SpaceInvaders-v0')
+            env = gym.make('SpaceInvaders-v0')
 
-          curr_state = np.stack([env.step(0)[0] for i in xrange(4)], axis=2)
-          curr_state = preprocessor.process_state_for_network(curr_state)
-          
-          while not is_terminal:
-              env.render()
-              action = np.argmax(self.sess.run(self.q_values, feed_dict = {self.state:curr_state}))
-              next_state, reward, is_terminal, _ = env.step(action)
+            curr_state = np.stack([env.step(0)[0] for i in xrange(4)], axis=2)
+            curr_state = preprocessor.process_state_for_network(curr_state)
+            
+            while not is_terminal:
+                env.render()
+                action = np.argmax(self.sess.run(self.q_values, feed_dict = {self.state:curr_state}))
+                next_state, reward, is_terminal, _ = env.step(action)
 
-              next_state = preprocessor.process_state_for_network(next_state)
-              next_state = np.expand_dims(next_state, axis = 2)
-              # append the next state to the last 3 frames in currstate to form the new state
-              next_state = np.append(curr_state[:,:,1:], next_state, axis = 2)
+                next_state = preprocessor.process_state_for_network(next_state)
+                next_state = np.expand_dims(next_state, axis = 2)
+                # append the next state to the last 3 frames in currstate to form the new state
+                next_state = np.append(curr_state[:,:,1:], next_state, axis = 2)
 
-              curr_state = next_state
+                curr_state = next_state
 

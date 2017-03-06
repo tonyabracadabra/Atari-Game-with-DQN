@@ -137,6 +137,7 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
 
         self.start_value = start_value
         self.end_value = end_value
+        self.epsilon = self.start_value
         self.num_steps = num_steps
         self.decrement = float(end_value - start_value) / num_steps
         self.curr_steps = 0
