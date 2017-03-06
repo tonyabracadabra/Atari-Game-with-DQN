@@ -1,4 +1,5 @@
 import tensorflow as tf
+import numpy as np
 
 """Main DQN agent."""
 
@@ -84,11 +85,11 @@ class DQNAgent:
         """
 
         # Placeholder that we want to feed the value in, just one value
-        self.y_true = tf.placeholder(tf.float32, [None,])
+        self.y_true = tf.placeholder(tf.float32, [self.batch_size,])
         # Placeholder that specify which action
-        self.action = tf.placeholder(tf.int8, [None,])
+        self.action = tf.placeholder(tf.int8, [self.batch_size,])
         # the output of the q_network is y_pred
-        y_pred = q_values[np.arange(5), self.action]
+        y_pred = tf.stack([self.q_values[i, self.action[i]] for i in xrange(self.batch_size)])
 
         self.loss = loss_func(y_true, y_pred)
 
@@ -103,7 +104,7 @@ class DQNAgent:
         ------
         Q-values for the state(s)
         """
-        q_values_val = sess.run(self.q_values, feed_dict={self.state:state})
+        q_values_val = self.sess.run(self.q_values, feed_dict={self.state:state})
 
         return q_values_val
 
@@ -129,7 +130,7 @@ class DQNAgent:
         selected action
         """
 
-        q_values_val = calc_q_values(state)
+        q_values_val = self.calc_q_values(state)
 
         return policy.select_action(q_values_val)
 
@@ -149,7 +150,16 @@ class DQNAgent:
         output. They can help you monitor how training is going.
         """
 
-        pass
+        samples = self.memory.sample(self.batch_size)
+        # stack to the first dimension as batch size, which is gooood
+        states = np.stack([sample.state for sample in samples])
+        actions = np.stack([sample.action for sample in samples])
+        y_vals = map(self._calc_y, samples)
+
+        _, loss_val = self.sess.run([self.optimizer, self.loss], feed_dict={self.state:states, \
+                                    self.y_true:y_vals, self.action:actions})
+
+        return loss_val
 
     def fit(self, env, num_iterations, max_episode_length=None):
         """Fit your model to the provided environment.
@@ -178,19 +188,12 @@ class DQNAgent:
         """
 
         # Get the initial state
-        curr_state = np.stack([env.step(0)[0] for i in xrange(4)], axis=2)
-        curr_state = preprocessor.process_state_for_network(curr_state)
+        curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
+                              [env.step(0)[0] for i in xrange(4)]), axis=2)
 
         for i in xrange(num_iterations):
-            self._append_to_memory(curr_state)
-
-            samples = self.memory.sample(self.batch_size)
-            # stack to the first dimension as batch size, which is gooood
-            states = np.stack([sample.state for sample in samples])
-            y_vals = map(self._calc_y, samples)
-
-            _, loss_val = self.sess.run([self.optimizer, self.loss], feed_dict={self.state:states, \
-                                    self.y_true:y_vals, self.action=action})
+            next_state = self._append_to_memory(curr_state)
+            self.update_policy()
 
             print "Loss val : " + str(loss_val)
 
@@ -198,22 +201,24 @@ class DQNAgent:
 
     def _calc_y(self, sample):
         y_val = sample.reward
-            if not sample.is_terminal:
-                y_val += self.gamma * np.max(self.sess.run(self.q_values, feed_dict={self.state:sample.next_state}))
+        if not sample.is_terminal:
+            y_val += self.gamma * np.max(self.sess.run(self.q_values, feed_dict={self.state:sample.next_state}))
 
         return y_val
 
-    def _append_transition(self, curr_state):
+    def _append_to_memory(self, curr_state):
         action = self.select_action(curr_state)
         # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
         next_state, reward, is_terminal, _ = env.step(action)
-        # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess φ_{t+1} = φ(s_{t+1})
-        next_state = preprocessor.process_state_for_network(next_state)
+        # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
+        next_state = self.preprocessor.process_state_for_network(next_state)
         next_state = np.expand_dims(next_state, axis = 2)
         # append the next state to the last 3 frames in currstate to form the new state
         next_state = np.append(curr_state[:,:,1:], next_state, axis = 2)
 
         self.memory.append(curr_state, action, reward, next_state, is_terminal)
+
+        return next_state
 
     def evaluate(self, env, num_episodes, max_episode_length=None):
         """Test your agent with a provided environment.
@@ -246,7 +251,4 @@ class DQNAgent:
               next_state = np.append(curr_state[:,:,1:], next_state, axis = 2)
 
               curr_state = next_state
-
-
-
 

@@ -15,6 +15,8 @@ import deeprl_hw2 as tfrl
 from deeprl_hw2.dqn import DQNAgent
 from deeprl_hw2.objectives import mean_huber_loss
 from deeprl_hw2.preprocessors import AtariPreprocessor
+from deeprl_hw2.core import *
+from deeprl_hw2.policy import *
 
 import gym
 
@@ -117,6 +119,8 @@ def main():  # noqa: D103
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_burn_in', default=0.05, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_iterations', default=1000, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--max_episode_length', default=100, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--train_freq', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
@@ -140,15 +144,17 @@ def main():  # noqa: D103
     policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 100)
     sess = tf.Session()
     dqn_agent = DQNAgent(q_network, preprocessor, memory, policy, args.gamma, \
-             target_update_freq, num_burn_in, train_freq, args.batch_size, sess)
+             args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, sess)
 
-    while 1:
-        env = gym.make('SpaceInvaders-v0')
-        action = 5
-        nextstate, reward, is_terminal, debug_info = env.step(action)
-        while not is_terminal:
-            nextstate, reward, is_terminal, debug_info = env.step(action)
-            env.render()
+    dqn_agent.fit(env, args.num_iterations, args.max_episode_length)
+
+    # while 1:
+    #     env = gym.make('SpaceInvaders-v0')
+    #     action = 5
+    #     nextstate, reward, is_terminal, debug_info = env.step(action)
+    #     while not is_terminal:
+    #         nextstate, reward, is_terminal, debug_info = env.step(action)
+    #         env.render()
 
 
 

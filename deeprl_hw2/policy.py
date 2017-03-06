@@ -135,8 +135,8 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
     def __init__(self, start_value, end_value,
                  num_steps):  # noqa: D102
 
-        self.start_value
-        self.end_value
+        self.start_value = start_value
+        self.end_value = end_value
         self.num_steps = num_steps
         self.decrement = float(end_value - start_value) / num_steps
         self.curr_steps = 0
