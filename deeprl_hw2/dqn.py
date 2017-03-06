@@ -86,13 +86,13 @@ class DQNAgent:
         # Placeholder that we want to feed the value in, just one value
         self.y_true = tf.placeholder(tf.float32, [None,])
         # Placeholder that specify which action
-        self.action = tf.placeholder(tf.int8)
+        self.action = tf.placeholder(tf.int8, [None,])
         # the output of the q_network is y_pred
-        y_pred = q_values[:, action]
+        y_pred = q_values[np.arange(5), self.action]
 
-        loss = loss_func(y_true, y_pred)
+        self.loss = loss_func(y_true, y_pred)
 
-        optimizer = optimizer.minimize(loss)
+        self.optimizer = optimizer.minimize(self.loss)
 
     def calc_q_values(self, state):
         """Given a state (or batch of states) calculate the Q-values.
@@ -182,27 +182,28 @@ class DQNAgent:
         curr_state = preprocessor.process_state_for_network(curr_state)
 
         for i in xrange(num_iterations):
-            _append_to_memory(curr_state)
+            self._append_to_memory(curr_state)
 
             samples = self.memory.sample(self.batch_size)
+            # stack to the first dimension as batch size, which is gooood
             states = np.stack([sample.state for sample in samples])
-            y_vals = map(_calc_y, samples)
+            y_vals = map(self._calc_y, samples)
 
-            _, loss_val = self.sess.run([optimizer, loss], feed_dict={self.state:states, \
+            _, loss_val = self.sess.run([self.optimizer, self.loss], feed_dict={self.state:states, \
                                     self.y_true:y_vals, self.action=action})
 
             print "Loss val : " + str(loss_val)
 
             curr_state = next_state
 
-    def _calc_y(sample):
+    def _calc_y(self, sample):
         y_val = sample.reward
             if not sample.is_terminal:
                 y_val += self.gamma * np.max(self.sess.run(self.q_values, feed_dict={self.state:sample.next_state}))
 
         return y_val
 
-    def _append_transition(curr_state):
+    def _append_transition(self, curr_state):
         action = self.select_action(curr_state)
         # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
         next_state, reward, is_terminal, _ = env.step(action)
