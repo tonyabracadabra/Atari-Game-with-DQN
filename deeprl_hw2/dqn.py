@@ -61,22 +61,22 @@ class DQNAgent:
         self.target_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='target')
 
         # Input placeholders for both online and target network
-        self.state_online = q_network_online.input
-        self.state_target = q_network_target.input
+        self.state_online = self.q_network_online.input
+        self.state_target = self.q_network_target.input
 
         self.preprocessor = preprocessor
         self.memory = memory
         self.gamma = gamma
         self.policy = policy
-        self.target_update_freq = target_update_freq
         self.train_freq = train_freq
         self.num_burn_in = num_burn_in
         self.batch_size = batch_size
+        self.target_update_freq = target_update_freq
         self.sess = sess
         # Copy from online network to target network
 
         # placeholders for updating the online network
-        self.update_phs = [tf.placeholder(tf.float32, shape=tf.shape(var)) for var in self.online_vars]
+        self.update_phs = [tf.placeholder(tf.float32, shape=var.get_shape()) for var in self.online_vars]
         # update operations
         self.update_ops = [update_pair[0].assign(update_pair[1]) \
                           for update_pair in zip(self.target_vars, self.update_phs)]
@@ -120,7 +120,7 @@ class DQNAgent:
         ------
         Q-values for the state(s)
         """
-        q_values_val = self.sess.run(self.q_values, feed_dict={self.state_online:state})
+        q_values_val = self.sess.run(self.q_values_online, feed_dict={self.state_online:state})
 
         return q_values_val
 
@@ -216,7 +216,7 @@ class DQNAgent:
             if i < self.num_burn_in:
                 continue
 
-            if i % target_update_freq == 0:
+            if i % self.target_update_freq == 0:
                 update_pairs = zip(self.update_ops, zip(self.update_phs, self.sess.run(self.online_vars)))
                 # updating the parameters from the previous network
                 [sess.run(pair[0], feed_dict={pair[1][0]:pair[1][1]}) for pair in update_pairs]
@@ -229,7 +229,7 @@ class DQNAgent:
     def _calc_y(self, sample):
         y_val = sample.reward
         if not sample.is_terminal:
-            y_val += self.gamma * np.max(self.sess.run(self.q_values_target, feed_dict={self.state:sample.next_state}))
+            y_val += self.gamma * np.max(self.sess.run(self.q_values_target, feed_dict={self.state_target:sample.next_state}))
 
         return y_val
 
