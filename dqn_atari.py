@@ -172,7 +172,7 @@ def main():  # noqa: D103
     policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 100)
     sess = tf.Session()
     dqn_agent = DQNAgent(q_networks, preprocessor, memory, policy, args.gamma, \
-             args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, sess)
+             args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, args.max_episode_length, sess)
 
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
