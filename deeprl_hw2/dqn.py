@@ -43,7 +43,7 @@ class DQNAgent:
       How many samples in each minibatch.
     """
     def __init__(self,
-                 q_network,
+                 q_networks,
                  preprocessor,
                  memory,
                  policy,
@@ -54,9 +54,16 @@ class DQNAgent:
                  batch_size,
                  sess):
 
-        self.q_network = q_network
-        self.q_values = q_network.output
-        self.state = q_network.input
+        self.q_network_online, self.q_network_target = q_networks
+        self.q_values_online = self.q_network_online.output
+        self.online_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='online')
+        self.q_values_target = self.q_network_target.output
+        self.target_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='target')
+
+        # Input placeholders for both online and target network
+        self.state_online = q_network_online.input
+        self.state_target = q_network_target.input
+
         self.preprocessor = preprocessor
         self.memory = memory
         self.gamma = gamma
@@ -66,6 +73,14 @@ class DQNAgent:
         self.num_burn_in = num_burn_in
         self.batch_size = batch_size
         self.sess = sess
+        # Copy from online network to target network
+
+        # placeholders for updating the online network
+        self.update_phs = [tf.placeholder(tf.float32, shape=tf.shape(var)) for var in self.online_vars]
+        # update operations
+        self.update_ops = [update_pair[0].assign(update_pair[1]) \
+                          for update_pair in zip(self.target_vars, self.update_phs)]
+
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -90,7 +105,7 @@ class DQNAgent:
         # Placeholder that specify which action
         self.action = tf.placeholder(tf.int32, [self.batch_size,])
         # the output of the q_network is y_pred
-        self.y_pred = tf.stack([self.q_values[i, self.action[i]] for i in xrange(self.batch_size)])
+        self.y_pred = tf.stack([self.q_values_online[i, self.action[i]] for i in xrange(self.batch_size)])
 
         self.loss = loss_func(self.y_true, self.y_pred)
 
@@ -105,7 +120,7 @@ class DQNAgent:
         ------
         Q-values for the state(s)
         """
-        q_values_val = self.sess.run(self.q_values, feed_dict={self.state:state})
+        q_values_val = self.sess.run(self.q_values, feed_dict={self.state_online:state})
 
         return q_values_val
 
@@ -157,7 +172,7 @@ class DQNAgent:
         actions = np.stack([sample.action for sample in samples])
         y_vals = np.stack(map(self._calc_y, samples))
 
-        _, loss_val = self.sess.run([self.optimizer, self.loss], feed_dict={self.state:states, self.y_true:y_vals, self.action:actions})
+        _, loss_val = self.sess.run([self.optimizer, self.loss], feed_dict={self.state_online:states, self.y_true:y_vals, self.action:actions})
 
         return loss_val
 
@@ -198,16 +213,31 @@ class DQNAgent:
         for i in xrange(num_iterations):
             next_state = self._append_to_memory(curr_state, env)
 
-            if i > self.num_burn_in:
-                loss_val = self.update_policy()
-                print str(i) + "th Loss val : " + str(loss_val)
+            if i < self.num_burn_in:
+                continue
+
+            if i % target_update_freq == 0:
+                update_pairs = zip(self.update_ops, zip(self.update_phs, self.sess.run(self.online_vars)))
+                # updating the parameters from the previous network
+                [sess.run(pair[0], feed_dict={pair[1][0]:pair[1][1]}) for pair in update_pairs]
+
+            loss_val = self.update_policy()
+            print str(i) + "th Loss val : " + str(loss_val)
 
             curr_state = next_state
 
     def _calc_y(self, sample):
         y_val = sample.reward
         if not sample.is_terminal:
-            y_val += self.gamma * np.max(self.sess.run(self.q_values, feed_dict={self.state:sample.next_state}))
+            y_val += self.gamma * np.max(self.sess.run(self.q_values_target, feed_dict={self.state:sample.next_state}))
+
+        return y_val
+
+    def _calc_y_double(self, sample):
+        y_val = sample.reward
+        if not sample.is_terminal:
+            a = np.argmax(self.sess.run(self.q_values_online, feed_dict={self.state_online:sample.next_state}))
+            y_val += self.gamma * self.sess.run(self.q_values_target, feed_dict={self.state_target:sample.next_state})[a]
 
         return y_val
 
@@ -251,7 +281,7 @@ class DQNAgent:
             is_terminal = False
             while not is_terminal:
                 env.render()
-                action = np.argmax(self.sess.run(self.q_values, feed_dict = {self.state:curr_state}))
+                action = np.argmax(self.sess.run(self.q_values, feed_dict = {self.state_online:curr_state}))
                 next_state, reward, is_terminal, _ = env.step(action)
 
                 next_state = self.preprocessor.process_state_for_network(next_state)
