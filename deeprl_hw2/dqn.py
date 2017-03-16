@@ -163,9 +163,10 @@ class DQNAgent:
         # stack to the first dimension as batch size, which is gooood
         states = np.array([np.squeeze(sample.state) for sample in samples])
         actions = np.stack([sample.action for sample in samples])
-        y_vals = np.stack(map(self._calc_y, samples))
+        y_vals = np.squeeze(np.stack(map(self._calc_y_double, samples)))
 
-        _, loss_val = self.sess.run([self.optimizer, self.loss], feed_dict={self.state_online:states, self.y_true:y_vals, self.action:actions})
+        _, loss_val = self.sess.run([self.optimizer, self.loss], \
+                      feed_dict={self.state_online:states, self.y_true:y_vals, self.action:actions})
 
         return loss_val
 
@@ -238,7 +239,7 @@ class DQNAgent:
         y_val = sample.reward
         if not sample.is_terminal:
             a = np.argmax(self.sess.run(self.q_values_online, feed_dict={self.state_online:sample.next_state}))
-            y_val += self.gamma * self.sess.run(self.q_values_target, feed_dict={self.state_target:sample.next_state})[a]
+            y_val += self.gamma * self.sess.run(self.q_values_target, feed_dict={self.state_target:sample.next_state})[:,a]
 
         return y_val
 
