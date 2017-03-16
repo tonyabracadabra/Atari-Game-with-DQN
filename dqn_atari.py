@@ -48,40 +48,24 @@ def create_model_deep(window, input_shape, num_actions,
     keras.models.Model
       The Q-model.
     """
-    with tf.variable_scope("online"):
-        input_shape = (input_shape[0], input_shape[1], window)
 
-        state = Input(shape=input_shape)
-        # First convolutional layer
-        x = Convolution2D(16, 8, 8, border_mode='valid', activation='relu')(state)
-        # Second convolutional layer
-        x = Convolution2D(32, 4, 4, border_mode='valid', activation='relu')(x)
-        # flatten the tensor
-        x = Flatten()(x)
-        x = Dense(256, activation='relu')(x)
-        # output layer
-        y_pred = Dense(num_actions)(x)
+    input_shape = (input_shape[0], input_shape[1], window)
 
-        model_online = Model(input=state, output=y_pred)
+    state = Input(shape=input_shape)
+    # First convolutional layer
+    x = Convolution2D(16, 8, 8, border_mode='valid', activation='relu')(state)
+    # Second convolutional layer
+    x = Convolution2D(32, 4, 4, border_mode='valid', activation='relu')(x)
+    # flatten the tensor
+    x = Flatten()(x)
+    x = Dense(256, activation='relu')(x)
+    # output layer
+    y_pred = Dense(num_actions)(x)
 
+    model = Model(input=state, output=y_pred)
 
-    with tf.variable_scope("target"):
-        input_shape = (input_shape[0], input_shape[1], window)
+    return mdoel
 
-        state = Input(shape=input_shape)
-        # First convolutional layer
-        x = Convolution2D(16, 8, 8, border_mode='valid', activation='relu')(state)
-        # Second convolutional layer
-        x = Convolution2D(32, 4, 4, border_mode='valid', activation='relu')(x)
-        # flatten the tensor
-        x = Flatten()(x)
-        x = Dense(256, activation='relu')(x)
-        # output layer
-        y_pred = Dense(num_actions)(x)
-
-        model_target = Model(input=state, output=y_pred)
-
-    return (model_online, model_target)
 
 def create_model_linear(window, input_shape, num_actions,
                  model_name='q_network_linear'):
@@ -148,7 +132,7 @@ def main():  # noqa: D103
     parser.add_argument('--target_update_freq', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_iterations', default=200, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--max_episode_length', default=200, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--max_episode_length', default=100, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--train_freq', default=500, help='Exploration probability for epsilon-greedy')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
@@ -167,11 +151,14 @@ def main():  # noqa: D103
     num_actions = env.action_space.n
 
     preprocessor = AtariPreprocessor(args.new_size)
-    q_networks = create_model_deep(args.window, args.new_size, num_actions)
+
+    q_network_online = create_model_deep(args.window, args.new_size, num_actions)
+    q_network_target = create_model_deep(args.window, args.new_size, num_actions)
+
     memory = ReplayMemory(args.replay_buffer_size, args.window)
     policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 100)
     sess = tf.Session()
-    dqn_agent = DQNAgent(q_networks, preprocessor, memory, policy, args.gamma, \
+    dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, args.max_episode_length, sess)
 
 

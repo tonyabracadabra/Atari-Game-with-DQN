@@ -57,9 +57,7 @@ class DQNAgent:
 
         self.q_network_online, self.q_network_target = q_networks
         self.q_values_online = self.q_network_online.output
-        self.online_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='online')
         self.q_values_target = self.q_network_target.output
-        self.target_vars = tf.get_collection(tf.GraphKeys.VARIABLES, scope='target')
 
         # Input placeholders for both online and target network
         self.state_online = self.q_network_online.input
@@ -73,16 +71,7 @@ class DQNAgent:
         self.num_burn_in = num_burn_in
         self.batch_size = batch_size
         self.target_update_freq = target_update_freq
-        self.max_episode_length = max_episode_length
         self.sess = sess
-        # Copy from online network to target network
-
-        # placeholders for updating the online network
-        self.update_phs = [tf.placeholder(tf.float32, shape=var.get_shape()) for var in self.online_vars]
-        # update operations
-        self.update_ops = [update_pair[0].assign(update_pair[1]) \
-                          for update_pair in zip(self.target_vars, self.update_phs)]
-
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -178,7 +167,7 @@ class DQNAgent:
 
         return loss_val
 
-    def fit(self, env, num_iterations, max_episode_length=None):
+    def fit(self, env, num_iterations, max_episode_length=100):
         """Fit your model to the provided environment.
 
         Its a good idea to print out things like loss, average reward,
@@ -208,17 +197,23 @@ class DQNAgent:
         self.sess.run(init)
 
         iter_t = num_iterations
-        
+
         while iter_t > 0:
             # Get the initial state
             curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
                                   [env.step(0)[0] for i in xrange(4)]), axis=2)
             curr_state = np.expand_dims(curr_state, axis = 0)
 
+            print iter_t
+
+            print max_episode_length
+
             for j in xrange(max_episode_length):
+                iter_t -= 1
                 next_state, is_terminal = self._append_to_memory(curr_state, env)
 
                 if is_terminal:
+                    print j
                     break
 
                 if i < self.num_burn_in:
@@ -226,16 +221,14 @@ class DQNAgent:
 
                 # Time for updating (copy...) the target network
                 if i % self.target_update_freq == 0:
-                    update_pairs = zip(self.update_ops, zip(self.update_phs, self.sess.run(self.online_vars)))
+                    update_ops = get_hard_target_model_updates(q_values_target, q_values_online)
                     # updating the parameters from the previous network
-                    [sess.run(pair[0], feed_dict={pair[1][0]:pair[1][1]}) for pair in update_pairs]
+                    sess.run(update_ops)
 
                 loss_val = self.update_policy()
                 print str(i) + "th Loss val : " + str(loss_val)
 
                 curr_state = next_state
-
-                iter_t -= 1
 
     def _calc_y(self, sample):
         y_val = sample.reward
@@ -292,7 +285,7 @@ class DQNAgent:
             is_terminal = False
             while not is_terminal:
                 env.render()
-                action = np.argmax(self.sess.run(self.q_values, feed_dict = {self.state_online:curr_state}))
+                action = np.argmax(self.sess.run(self.q_values_target, feed_dict = {self.state_online:curr_state}))
                 next_state, reward, is_terminal, _ = env.step(action)
 
                 next_state = self.preprocessor.process_state_for_network(next_state)
