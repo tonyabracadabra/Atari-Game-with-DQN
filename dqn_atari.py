@@ -64,7 +64,7 @@ def create_model_deep(window, input_shape, num_actions,
 
     model = Model(input=state, output=y_pred)
 
-    return mdoel
+    return model
 
 
 def create_model_linear(window, input_shape, num_actions,
@@ -129,10 +129,10 @@ def main():  # noqa: D103
     parser.add_argument('--gamma', default=0.99, help='Discount factor')
     parser.add_argument('--alpha', default=0.0001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--target_update_freq', default=0.05, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--target_update_freq', default=50, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_iterations', default=200, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--max_episode_length', default=100, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_iterations', default=300, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--max_episode_length', default=300, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--train_freq', default=500, help='Exploration probability for epsilon-greedy')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')

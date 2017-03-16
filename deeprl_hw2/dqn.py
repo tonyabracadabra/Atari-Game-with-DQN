@@ -2,6 +2,8 @@ import tensorflow as tf
 import numpy as np
 import gym
 
+from utils import *
+
 """Main DQN agent."""
 
 class DQNAgent:
@@ -196,37 +198,32 @@ class DQNAgent:
         init = tf.global_variables_initializer()
         self.sess.run(init)
 
-        iter_t = num_iterations
-
-        while iter_t > 0:
+        iter_t = 0
+        while iter_t < num_iterations:
             # Get the initial state
             curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
                                   [env.step(0)[0] for i in xrange(4)]), axis=2)
             curr_state = np.expand_dims(curr_state, axis = 0)
 
-            print iter_t
-
-            print max_episode_length
-
             for j in xrange(max_episode_length):
-                iter_t -= 1
+                iter_t += 1
                 next_state, is_terminal = self._append_to_memory(curr_state, env)
 
                 if is_terminal:
                     print j
                     break
 
-                if i < self.num_burn_in:
+                if j < self.num_burn_in:
                     continue
 
                 # Time for updating (copy...) the target network
-                if i % self.target_update_freq == 0:
-                    update_ops = get_hard_target_model_updates(q_values_target, q_values_online)
+                if j % self.target_update_freq == 0:
+                    update_ops = get_hard_target_model_updates(self.q_network_target, self.q_network_online)
                     # updating the parameters from the previous network
-                    sess.run(update_ops)
+                    self.sess.run(update_ops)
 
                 loss_val = self.update_policy()
-                print str(i) + "th Loss val : " + str(loss_val)
+                print str(iter_t) + "th Episode, " + str(j) + "th iteration \n Loss val : " + str(loss_val)
 
                 curr_state = next_state
 
@@ -250,7 +247,7 @@ class DQNAgent:
         # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
         next_state, reward, is_terminal, _ = env.step(action)
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
-        next_state = self.preprocessor.process_state_for_network(next_state)
+        next_state = self.preprocessor.process_state_for_memory(next_state)
         next_state = np.expand_dims(next_state, axis = 2)
         next_state = np.expand_dims(next_state, axis = 0)
         # append the next state to the last 3 frames in currstate to form the new state
@@ -285,7 +282,7 @@ class DQNAgent:
             is_terminal = False
             while not is_terminal:
                 env.render()
-                action = np.argmax(self.sess.run(self.q_values_target, feed_dict = {self.state_online:curr_state}))
+                action = np.argmax(self.sess.run(self.q_values_target, feed_dict = {self.state_target:curr_state}))
                 next_state, reward, is_terminal, _ = env.step(action)
 
                 next_state = self.preprocessor.process_state_for_network(next_state)
