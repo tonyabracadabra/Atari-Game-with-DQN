@@ -173,7 +173,7 @@ class ReplayMemory:
     If you are storing raw Sample objects in your memory, then you may
     not need the end_episode method, and you may want to tweak the
     append method. This will make the sample method easy to implement
-    (just ranomly draw saamples saved in your memory).
+    (just randomly draw samples saved in your memory).
 
     However, the above approach will waste a lot of memory (as states
     will be stored multiple times in s as next state and then s' as
@@ -202,7 +202,7 @@ class ReplayMemory:
     def __init__(self, max_size, window_length):
         """Setup memory.
 
-        You should specify the maximum size o the memory. Once the
+        You should specify the maximum size of the memory. Once the
         memory fills up oldest values should be removed. You can try
         the collections.deque class as the underlying storage, but
         your sample method will be very slow.

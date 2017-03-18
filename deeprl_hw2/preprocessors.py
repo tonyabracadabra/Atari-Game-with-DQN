@@ -24,7 +24,10 @@ class HistoryPreprocessor(Preprocessor):
     """
 
     def __init__(self, history_length=1):
-        pass
+        self.history_length = history_length
+        self.history_seq = np.collections.deque(maxlen=5)
+        for _ in xrange(history_length):
+            self.history_seq.append(0)
 
     def process_state_for_network(self, state):
         """You only want history when you're deciding the current action to take."""
@@ -35,7 +38,7 @@ class HistoryPreprocessor(Preprocessor):
 
         Useful when you start a new episode.
         """
-        pass
+        self.history_seq[:] = []
 
     def get_config(self):
         return {'history_length': self.history_length}
@@ -111,7 +114,7 @@ class AtariPreprocessor(Preprocessor):
         samples from the replay memory. Meaning you need to convert
         both state and next state values.
         """
-        return map(process_state_for_network, samples)
+        return map(self.process_state_for_network, samples)
 
     def process_reward(self, reward):
         """Clip reward between -1 and 1."""
@@ -119,7 +122,7 @@ class AtariPreprocessor(Preprocessor):
 
 
 class PreprocessorSequence(Preprocessor):
-    """You may find it useful to stack multiple preprocesosrs (such as the History and the AtariPreprocessor).
+    """You may find it useful to stack multiple preprocessors (such as the History and the AtariPreprocessor).
 
     You can easily do this by just having a class that calls each preprocessor in succession.
 

@@ -1,2 +1,5 @@
 # python compile
 *.pyc
+
+# idea folder
+.idea/*

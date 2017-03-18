@@ -25,12 +25,16 @@ def huber_loss(y_true, y_pred, max_grad=1.):
       The huber loss.
     """
 
-    func = lambda i : tf.cond(tf.abs(y_true[i]-y_pred[i]) < max_grad, lambda: 0.5 * tf.square(y_true[i]-y_pred[i]), \
-                  lambda: max_grad * (tf.abs(y_true[i]-y_pred[i]) - 0.5 * max_grad))
+    func = lambda i: tf.cond(tf.abs(y_true[i] - y_pred[i]) < max_grad, lambda: 0.5 * tf.square(y_true[i] - y_pred[i]), \
+                             lambda: max_grad * (tf.abs(y_true[i] - y_pred[i]) - 0.5 * max_grad))
 
-    result = tf.stack(map(func, xrange(y_true.shape[0].value)))
+    if semver.match(tf.__version__, '<1.0.0'):
+        result = tf.pack(map(func, xrange(y_true.shape[0].value)))
+    else:
+        result = tf.stack(map(func, xrange(y_true.shape[0].value)))
 
     return result
+
 
 def mean_huber_loss(y_true, y_pred, max_grad=1.):
     """Return mean huber loss.

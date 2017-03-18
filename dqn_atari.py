@@ -8,6 +8,7 @@ import numpy as np
 import tensorflow as tf
 from keras.layers import (Activation, Convolution2D, Dense, Flatten, Input, Permute)
 
+
 from keras.models import Model
 
 import deeprl_hw2 as tfrl
@@ -19,9 +20,40 @@ from deeprl_hw2.policy import *
 
 import gym
 
+
+def create_model_duel(window, input_shape, num_actions,
+                      model_name='q_network_duel'):
+    input_shape = (input_shape[0], input_shape[1], window)
+
+    state = Input(shape=input_shape)
+    # conv1
+    x = Convolution2D(16, 8, 8, border_mode='valid')(state)
+    x = Activation('relu')(x)
+    # conv2
+    x = Convolution2D(32, 4, 4, border_mode='valid')(x)
+    x = Activation('relu')(x)
+
+    x = Flatten()(x)
+    # value output
+    x_val = Dense(256)(x)
+    y_val = Dense(1)(x_val)
+
+    # advantage output
+    x_act = Dense(256)(x)
+    y_act = Dense(num_actions)(x_act)
+    # mean advantage
+    y_act_mean = tf.reduce_mean(y_act, axis=1)
+
+    y_q = y_val + y_act - y_act_mean
+
+    model = Model(input=state, output=y_q)
+
+    return model
+
+
 def create_model_deep(window, input_shape, num_actions,
-                 model_name='q_network_deep'):  # noqa: D103
-    """Create the Q-network model.
+                      model_name='q_network_deep'):  # noqa: D103
+    """Create the Deep-Q-network model.
 
     Use Keras to construct a keras.models.Model instance (you can also
     use the SequentialModel class).
@@ -53,12 +85,14 @@ def create_model_deep(window, input_shape, num_actions,
 
     state = Input(shape=input_shape)
     # First convolutional layer
-    x = Convolution2D(16, 8, 8, border_mode='valid', activation='relu')(state)
+    x = Convolution2D(16, 8, 8, border_mode='valid')(state)
+    x = Activation('relu')(x)
     # Second convolutional layer
-    x = Convolution2D(32, 4, 4, border_mode='valid', activation='relu')(x)
+    x = Convolution2D(32, 4, 4, border_mode='valid')(x)
+    x = Activation('relu')(x)
     # flatten the tensor
     x = Flatten()(x)
-    x = Dense(256, activation='relu')(x)
+    x = Dense(256)(x)
     # output layer
     y_pred = Dense(num_actions)(x)
 
@@ -68,12 +102,11 @@ def create_model_deep(window, input_shape, num_actions,
 
 
 def create_model_linear(window, input_shape, num_actions,
-                 model_name='q_network_linear'):
-
+                        model_name='q_network_linear'):
     input_shape = (input_shape[0], input_shape[1], window)
     state = Input(shape=input_shape)
     x = Flatten()(state)
-    x = Dense(256, activation='relu')(x)
+    x = Dense(256)(x)
 
     y_pred = Dense(num_actions)(x)
 
@@ -159,12 +192,11 @@ def main():  # noqa: D103
     policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 100)
     sess = tf.Session()
     dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
-             args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, args.max_episode_length, sess)
-
+                         args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, sess)
 
     optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
     dqn_agent.compile(optimizer, mean_huber_loss)
-    dqn_agent.fit(env, args.num_iterations, args.max_episode_length)
+    dqn_agent.fit(env, args.num_iterations)
     dqn_agent.evaluate(env, 10)
 
     # while 1:
@@ -174,7 +206,6 @@ def main():  # noqa: D103
     #     while not is_terminal:
     #         nextstate, reward, is_terminal, debug_info = env.step(action)
     #         env.render()
-
 
 
 if __name__ == '__main__':

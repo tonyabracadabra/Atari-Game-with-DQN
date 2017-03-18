@@ -6,6 +6,7 @@ from utils import *
 
 """Main DQN agent."""
 
+
 class DQNAgent:
     """Class implementing DQN.
 
@@ -44,6 +45,7 @@ class DQNAgent:
     batch_size: int
       How many samples in each minibatch.
     """
+
     def __init__(self,
                  q_networks,
                  preprocessor,
@@ -54,7 +56,6 @@ class DQNAgent:
                  num_burn_in,
                  train_freq,
                  batch_size,
-                 max_episode_length,
                  sess):
 
         self.q_network_online, self.q_network_target = q_networks
@@ -92,17 +93,17 @@ class DQNAgent:
         keras.optimizers.Optimizer class. Specifically the Adam
         optimizer.
         """
+        with tf.variable_scope('optimizer'):
+            # Placeholder that we want to feed the value in, just one value
+            self.y_true = tf.placeholder(tf.float32, [self.batch_size, ])
+            # Placeholder that specify which action
+            self.action = tf.placeholder(tf.int32, [self.batch_size, ])
+            # the output of the q_network is y_pred
+            self.y_pred = tf.stack([self.q_values_online[i, self.action[i]] for i in xrange(self.batch_size)])
 
-        # Placeholder that we want to feed the value in, just one value
-        self.y_true = tf.placeholder(tf.float32, [self.batch_size, ])
-        # Placeholder that specify which action
-        self.action = tf.placeholder(tf.int32, [self.batch_size,])
-        # the output of the q_network is y_pred
-        self.y_pred = tf.stack([self.q_values_online[i, self.action[i]] for i in xrange(self.batch_size)])
+            self.loss = loss_func(self.y_true, self.y_pred)
 
-        self.loss = loss_func(self.y_true, self.y_pred)
-
-        self.optimizer = optimizer.minimize(self.loss)
+            self.optimizer = optimizer.minimize(self.loss)
 
     def calc_q_values(self, state):
         """Given a state (or batch of states) calculate the Q-values.
@@ -113,7 +114,7 @@ class DQNAgent:
         ------
         Q-values for the state(s)
         """
-        q_values_val = self.sess.run(self.q_values_online, feed_dict={self.state_online:state})
+        q_values_val = self.sess.run(self.q_values_online, feed_dict={self.state_online: state})
 
         return q_values_val
 
@@ -166,7 +167,7 @@ class DQNAgent:
         y_vals = np.squeeze(np.stack(map(self._calc_y_double, samples)))
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
-                      feed_dict={self.state_online:states, self.y_true:y_vals, self.action:actions})
+                                    feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
 
         return loss_val
 
@@ -203,8 +204,8 @@ class DQNAgent:
         while iter_t < num_iterations:
             # Get the initial state
             curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
-                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
-            curr_state = np.expand_dims(curr_state, axis = 0)
+                                      [env.step(0)[0] for i in xrange(4)]), axis=2)
+            curr_state = np.expand_dims(curr_state, axis=0)
 
             for j in xrange(max_episode_length):
                 iter_t += 1
@@ -231,15 +232,17 @@ class DQNAgent:
     def _calc_y(self, sample):
         y_val = sample.reward
         if not sample.is_terminal:
-            y_val += self.gamma * np.max(self.sess.run(self.q_values_target, feed_dict={self.state_target:sample.next_state}))
+            y_val += self.gamma * np.max(
+                self.sess.run(self.q_values_target, feed_dict={self.state_target: sample.next_state}))
 
         return y_val
 
     def _calc_y_double(self, sample):
         y_val = sample.reward
         if not sample.is_terminal:
-            a = np.argmax(self.sess.run(self.q_values_online, feed_dict={self.state_online:sample.next_state}))
-            y_val += self.gamma * self.sess.run(self.q_values_target, feed_dict={self.state_target:sample.next_state})[:,a]
+            a = np.argmax(self.sess.run(self.q_values_online, feed_dict={self.state_online: sample.next_state}))
+            y_val += self.gamma * self.sess.run(self.q_values_target, feed_dict={self.state_target: sample.next_state})[
+                                  :, a]
 
         return y_val
 
@@ -249,10 +252,10 @@ class DQNAgent:
         next_state, reward, is_terminal, _ = env.step(action)
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
         next_state = self.preprocessor.process_state_for_memory(next_state)
-        next_state = np.expand_dims(next_state, axis = 2)
-        next_state = np.expand_dims(next_state, axis = 0)
+        next_state = np.expand_dims(next_state, axis=2)
+        next_state = np.expand_dims(next_state, axis=0)
         # append the next state to the last 3 frames in currstate to form the new state
-        next_state = np.append(curr_state[:,:,:,1:], next_state, axis = 3)
+        next_state = np.append(curr_state[:, :, :, 1:], next_state, axis=3)
 
         self.memory.append(curr_state, action, reward, next_state, is_terminal)
 
@@ -277,22 +280,21 @@ class DQNAgent:
 
             # Get the initial state
             curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
-                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
-            curr_state = np.expand_dims(curr_state, axis = 0)
-            
+                                      [env.step(0)[0] for _ in xrange(4)]), axis=2)
+            curr_state = np.expand_dims(curr_state, axis=0)
+
             is_terminal = False
             while not is_terminal:
                 env.render()
-                action = np.argmax(self.sess.run(self.q_values_target, feed_dict = {self.state_target:curr_state}))
+                action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
                 next_state, reward, is_terminal, _ = env.step(action)
 
                 next_state = self.preprocessor.process_state_for_network(next_state)
-                next_state = np.expand_dims(next_state, axis = 2)
-                next_state = np.expand_dims(next_state, axis = 0)
+                next_state = np.expand_dims(next_state, axis=2)
+                next_state = np.expand_dims(next_state, axis=0)
                 # append the next state to the last 3 frames in currstate to form the new state
-                next_state = np.append(curr_state[:,:,:,1:], next_state, axis = 3)
+                next_state = np.append(curr_state[:, :, :, 1:], next_state, axis=3)
 
                 curr_state = next_state
 
             num_episodes -= 1
-
