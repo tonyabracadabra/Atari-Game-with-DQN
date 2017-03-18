@@ -39,12 +39,12 @@ def create_model_duel(window, input_shape, num_actions,
     y_val = Dense(1)(x_val)
 
     # advantage output
-    x_act = Dense(256)(x)
-    y_act = Dense(num_actions)(x_act)
+    x_advantage = Dense(256)(x)
+    y_advantage = Dense(num_actions)(x_advantage)
     # mean advantage
-    y_act_mean = tf.reduce_mean(y_act, axis=1)
+    y_advantage_mean = tf.reduce_mean(y_advantage, axis=1)
 
-    y_q = y_val + y_act - y_act_mean
+    y_q = y_val + y_advantage - y_advantage_mean
 
     model = Model(input=state, output=y_q)
 
