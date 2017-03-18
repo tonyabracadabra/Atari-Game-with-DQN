@@ -190,14 +190,14 @@ def main():  # noqa: D103
 
     memory = ReplayMemory(args.replay_buffer_size, args.window)
     policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 100)
-    sess = tf.Session()
-    dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
-                         args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, sess)
+    with tf.Session() as sess:
+        dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
+                             args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, sess)
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
-    dqn_agent.compile(optimizer, mean_huber_loss)
-    dqn_agent.fit(env, args.num_iterations)
-    dqn_agent.evaluate(env, 10)
+        optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
+        dqn_agent.compile(optimizer, mean_huber_loss)
+        dqn_agent.fit(env, args.num_iterations)
+        dqn_agent.evaluate(env, 10)
 
     # while 1:
     #     env = gym.make('SpaceInvaders-v0')
