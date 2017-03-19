@@ -174,7 +174,7 @@ class DQNAgent:
 
         return loss_val
 
-    def fit(self, env, num_iterations, max_episode_length=100):
+    def fit(self, env, num_iterations, output_folder, save_freq=10000, max_episode_length=100):
         """Fit your model to the provided environment.
 
         Its a good idea to print out things like loss, average reward,
@@ -228,7 +228,15 @@ class DQNAgent:
             print "Start " + str(episode_count) + "th Episode ..."
 
             for j in xrange(max_episode_length):
+                if iter_t % save_freq == 0:
+                    model_json = self.q_values_online.to_json()
+                    with open(output_folder + str(iter_t) + ".json", "w") as json_file:
+                        json_file.write(model_json)
+                    # serialize weights to HDF5
+                        self.q_values_online.save_weights(output_folder + str(iter_t) + ".h5")
+                    print("Saved model to disk")
                 iter_t += 1
+
                 next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
                 total_reward += reward
 

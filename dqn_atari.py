@@ -148,23 +148,23 @@ def get_output_folder(parent_dir, env_name):
 
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
-    parser.add_argument('--env', default='Breakout-v0', help='Atari env name')
+    parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
     parser.add_argument('--window', default=4, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(80, 80), help='new size')
     parser.add_argument('--batch_size', default=32, help='Batch size')
-    parser.add_argument('--replay_buffer_size', default=10000, help='Replay buffer size')
+    parser.add_argument('--replay_buffer_size', default=1000000, help='Replay buffer size')
     parser.add_argument('--gamma', default=0.99, help='Discount factor')
     parser.add_argument('--alpha', default=0.0001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=50, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_burn_in', default=50, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_iterations', default=1000, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_iterations', default=100000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--max_episode_length', default=300, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--train_freq', default=500, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
+    parser.add_argument('--experience_replay', default=False, help='Choose whether or not to use experience replay')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
-
+    parser.add_argument('--save_freq', default=10000, type=int, help='model save frequency')
     args = parser.parse_args()
     # args.input_shape = tuple(args.input_shape)
 
@@ -175,7 +175,10 @@ def main():  # noqa: D103
     # then you can run your fit method.
 
     # keras model
-    env = gym.make('SpaceInvaders-v0')
+
+    output_folder = get_output_folder("./result/", args.env)
+
+    env = gym.make(args.env)
     num_actions = env.action_space.n
 
     preprocessor = AtariPreprocessor(args.new_size)
@@ -192,8 +195,8 @@ def main():  # noqa: D103
 
         optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)
-        dqn_agent.fit(env, args.num_iterations, args.max_episode_length)
-        dqn_agent.evaluate(env, 10)
+        dqn_agent.fit(env, args.num_iterations, output_folder, args.save_freq, args.max_episode_length)
+        # dqn_agent.evaluate(env, 10)
 
     # while 1:
     #     env = gym.make('SpaceInvaders-v0')
