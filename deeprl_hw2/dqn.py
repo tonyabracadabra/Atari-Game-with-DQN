@@ -207,20 +207,21 @@ class DQNAgent:
         iter_t = 0
         episode_count = 0
 
-        curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
+        init_state = np.stack(map(self.preprocessor.process_state_for_network, \
                                       [env.step(0)[0] for i in xrange(4)]), axis=2)
-        curr_state = np.expand_dims(curr_state, axis=0)
+        init_state = np.expand_dims(init_state, axis=0)
+        
+        curr_state = init_state
         print "Start filling up the replay memory before update ..."
         for j in xrange(self.num_burn_in):
             next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
+            curr_state = next_state
         print "Has Prefilled the replay memory"
 
         while iter_t < num_iterations:
             env.reset()
             # Get the initial state
-            curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
-                                      [env.step(0)[0] for i in xrange(4)]), axis=2)
-            curr_state = np.expand_dims(curr_state, axis=0)
+            curr_state = init_state
 
             episode_count += 1
             total_reward = 0
