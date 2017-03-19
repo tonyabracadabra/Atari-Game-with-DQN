@@ -142,7 +142,7 @@ def get_output_folder(parent_dir, env_name):
     experiment_id += 1
 
     parent_dir = os.path.join(parent_dir, env_name)
-    parent_dir = parent_dir + '-run{}'.format(experiment_id)
+    parent_dir = parent_dir + '-run{}'.format(experiment_id) + '/'
     return parent_dir
 
 
