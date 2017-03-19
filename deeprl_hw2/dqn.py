@@ -166,8 +166,7 @@ class DQNAgent:
         # stack to the first dimension as batch size, which is gooood
         states = np.array([np.squeeze(sample.state) for sample in samples])
         actions = np.stack([sample.action for sample in samples])
-        temp = map(self._calc_y_double, samples)
-        y_vals = np.squeeze(np.stack(temp))
+        y_vals = np.squeeze(np.stack(map(self._calc_y, samples)))
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                                     feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
