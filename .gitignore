@@ -3,3 +3,6 @@
 
 # idea folder
 .idea/*
+
+# output folder
+./atari-v0/*
