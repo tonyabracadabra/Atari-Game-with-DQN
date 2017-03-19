@@ -201,22 +201,31 @@ class DQNAgent:
         self.sess.run(init)
 
         iter_t = 0
+        episode_count = 0
         while iter_t < num_iterations:
             # Get the initial state
             curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
                                       [env.step(0)[0] for i in xrange(4)]), axis=2)
             curr_state = np.expand_dims(curr_state, axis=0)
 
+            episode_count += 1
+            total_reward = 0
+            print "Start " + str(episode_count) + "th Episode ..."
+
+            print "Start filling up the replay memory before update ..."
+            for j in xrange(self.num_burn_in):
+                next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
+                total_reward += reward
+            print "Has Prefilled the replay memory"
+
+            print "Start updating the network ..."
             for j in xrange(max_episode_length):
                 iter_t += 1
-                next_state, is_terminal = self._append_to_memory(curr_state, env)
+                next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
+                total_reward += reward
 
                 if is_terminal:
-                    print j
                     break
-
-                if j < self.num_burn_in:
-                    continue
 
                 # Time for updating (copy...) the target network
                 if j % self.target_update_freq == 0:
@@ -225,9 +234,13 @@ class DQNAgent:
                     self.sess.run(update_ops)
 
                 loss_val = self.update_policy()
-                print str(iter_t) + "th Episode, " + str(j) + "th iteration \n Loss val : " + str(loss_val)
-
+                print str(j) + "th iteration \n Loss val : " + str(loss_val)
                 curr_state = next_state
+
+            # update again after the episode ends...
+            loss_val = self.update_policy()
+            print str(episode_count) + "th Episode:\n" + "Reward: " + str(total_reward) + "\n Loss:" + str(loss_val)
+
 
     def _calc_y(self, sample):
         y_val = sample.reward
@@ -259,7 +272,7 @@ class DQNAgent:
 
         self.memory.append(curr_state, action, reward, next_state, is_terminal)
 
-        return next_state, is_terminal
+        return next_state, reward, is_terminal
 
     def evaluate(self, env, num_episodes, max_episode_length=None):
         """Test your agent with a provided environment.

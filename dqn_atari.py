@@ -163,7 +163,7 @@ def main():  # noqa: D103
     parser.add_argument('--alpha', default=0.0001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=50, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_burn_in', default=50, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_iterations', default=300, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--max_episode_length', default=300, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--train_freq', default=500, help='Exploration probability for epsilon-greedy')
