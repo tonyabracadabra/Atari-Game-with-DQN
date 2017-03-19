@@ -92,6 +92,7 @@ class GreedyEpsilonPolicy(Policy):
      Initial probability of choosing a random action. Can be changed
      over time.
     """
+
     def __init__(self, epsilon):
         self.epsilon = epsilon
 
@@ -110,10 +111,11 @@ class GreedyEpsilonPolicy(Policy):
           The action index chosen.
         """
         rand = random.random()
-        if rand < epsilon:
-            return random.randint(0, len(q_values)-1)
+        if rand < self.epsilon:
+            return random.randint(0, len(q_values) - 1)
         else:
             return np.argmax(q_values)
+
 
 class LinearDecayGreedyEpsilonPolicy(Policy):
     """Policy with a parameter that decays linearly.
@@ -160,15 +162,15 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
 
         if self.curr_steps < self.num_steps and is_training:
             self.curr_steps += 1
-            self.epsilon += self.decrement
+            self.epsilon -= self.decrement
 
         rand = random.random()
         if rand < self.epsilon:
-            return random.randint(0, len(q_values)-1)
+            return random.randint(0, len(q_values) - 1)
         else:
             return np.argmax(q_values)
-        
 
     def reset(self):
         """Start the decay over at the start value."""
-        self.curr_steps = 0
+        self.epsilon += (self.curr_steps - self.start_value) * self.decrement
+        self.curr_steps = self.start_value

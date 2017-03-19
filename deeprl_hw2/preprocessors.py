@@ -31,7 +31,7 @@ class HistoryPreprocessor(Preprocessor):
 
     def process_state_for_network(self, state):
         """You only want history when you're deciding the current action to take."""
-
+        pass
 
     def reset(self):
         """Reset the history sequence.

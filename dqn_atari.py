@@ -21,36 +21,6 @@ from deeprl_hw2.policy import *
 import gym
 
 
-def create_model_duel(window, input_shape, num_actions,
-                      model_name='q_network_duel'):
-    input_shape = (input_shape[0], input_shape[1], window)
-
-    state = Input(shape=input_shape)
-    # conv1
-    x = Convolution2D(16, 8, 8, border_mode='valid')(state)
-    x = Activation('relu')(x)
-    # conv2
-    x = Convolution2D(32, 4, 4, border_mode='valid')(x)
-    x = Activation('relu')(x)
-
-    x = Flatten()(x)
-    # value output
-    x_val = Dense(256)(x)
-    y_val = Dense(1)(x_val)
-
-    # advantage output
-    x_advantage = Dense(256)(x)
-    y_advantage = Dense(num_actions)(x_advantage)
-    # mean advantage
-    y_advantage_mean = tf.reduce_mean(y_advantage, axis=1)
-
-    y_q = y_val + y_advantage - y_advantage_mean
-
-    model = Model(input=state, output=y_q)
-
-    return model
-
-
 def create_model_deep(window, input_shape, num_actions,
                       model_name='q_network_deep'):  # noqa: D103
     """Create the Deep-Q-network model.
@@ -80,37 +50,61 @@ def create_model_deep(window, input_shape, num_actions,
     keras.models.Model
       The Q-model.
     """
+    model = None
+    if model_name is "q_network_deep" or "q_network_double":
 
-    input_shape = (input_shape[0], input_shape[1], window)
+        input_shape = (input_shape[0], input_shape[1], window)
 
-    state = Input(shape=input_shape)
-    # First convolutional layer
-    x = Convolution2D(16, 8, 8, border_mode='valid')(state)
-    x = Activation('relu')(x)
-    # Second convolutional layer
-    x = Convolution2D(32, 4, 4, border_mode='valid')(x)
-    x = Activation('relu')(x)
-    # flatten the tensor
-    x = Flatten()(x)
-    x = Dense(256)(x)
-    # output layer
-    y_pred = Dense(num_actions)(x)
+        state = Input(shape=input_shape)
+        # First convolutional layer
+        x = Convolution2D(16, 8, 8, border_mode='valid')(state)
+        x = Activation('relu')(x)
+        # Second convolutional layer
+        x = Convolution2D(32, 4, 4, border_mode='valid')(x)
+        x = Activation('relu')(x)
+        # flatten the tensor
+        x = Flatten()(x)
+        x = Dense(256)(x)
+        # output layer
+        y_pred = Dense(num_actions)(x)
 
-    model = Model(input=state, output=y_pred)
+        model = Model(input=state, output=y_pred)
 
-    return model
+    elif model_name is "q_network_duel":
+        input_shape = (input_shape[0], input_shape[1], window)
 
+        state = Input(shape=input_shape)
+        # conv1
+        x = Convolution2D(16, 8, 8, border_mode='valid')(state)
+        x = Activation('relu')(x)
+        # conv2
+        x = Convolution2D(32, 4, 4, border_mode='valid')(x)
+        x = Activation('relu')(x)
 
-def create_model_linear(window, input_shape, num_actions,
-                        model_name='q_network_linear'):
-    input_shape = (input_shape[0], input_shape[1], window)
-    state = Input(shape=input_shape)
-    x = Flatten()(state)
-    x = Dense(256)(x)
+        x = Flatten()(x)
+        # value output
+        x_val = Dense(256)(x)
+        y_val = Dense(1)(x_val)
 
-    y_pred = Dense(num_actions)(x)
+        # advantage output
+        x_advantage = Dense(256)(x)
+        y_advantage = Dense(num_actions)(x_advantage)
+        # mean advantage
+        y_advantage_mean = tf.reduce_mean(y_advantage, axis=1)
 
-    model = Model(input=state, output=y_pred)
+        y_q = y_val + y_advantage - y_advantage_mean
+
+        model = Model(input=state, output=y_q)
+
+    elif model_name is "q_network_linear":
+        input_shape = (input_shape[0], input_shape[1], window)
+        state = Input(shape=input_shape)
+        x = Flatten()(state)
+        x = Dense(256)(x)
+
+        y_pred = Dense(num_actions)(x)
+
+        model = Model(input=state, output=y_pred)
 
     return model
 
@@ -185,11 +179,11 @@ def main():  # noqa: D103
 
     preprocessor = AtariPreprocessor(args.new_size)
 
-    q_network_online = create_model_deep(args.window, args.new_size, num_actions)
-    q_network_target = create_model_deep(args.window, args.new_size, num_actions)
+    q_network_online = create_model_deep(args.window, args.new_size, num_actions, "q_network_double")
+    q_network_target = create_model_deep(args.window, args.new_size, num_actions, "q_network_double")
 
     memory = ReplayMemory(args.replay_buffer_size, args.window)
-    policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 100)
+    policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
                              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, sess)
