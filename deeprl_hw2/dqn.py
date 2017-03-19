@@ -210,7 +210,7 @@ class DQNAgent:
 
             episode_count += 1
             total_reward = 0
-
+            
             print "Start " + str(episode_count) + "th Episode ..."
             print "Start filling up the replay memory before update ..."
             for j in xrange(self.num_burn_in):
@@ -236,9 +236,6 @@ class DQNAgent:
                 loss_val = self.update_policy()
                 print str(j) + "th iteration \n Loss val : " + str(loss_val)
                 curr_state = next_state
-
-            # Clear replay memory after each episode
-            self.memory.clear()
 
             # update again after the episode ends...
             loss_val = self.update_policy()
