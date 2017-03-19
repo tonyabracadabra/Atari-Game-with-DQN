@@ -2,6 +2,7 @@
 
 import random
 
+
 class Sample:
     """Represents a reinforcement learning sample.
 
@@ -32,6 +33,7 @@ class Sample:
     is_terminal: boolean
       True if this action finished the episode. False otherwise.
     """
+
     def __init__(self, state, action, reward, next_state, is_terminal):
         self.state = state
         self.action = action
@@ -199,6 +201,7 @@ class ReplayMemory:
     clear()
       Reset the memory. Deletes all references to the samples.
     """
+
     def __init__(self, max_size, window_length):
         """Setup memory.
 
@@ -219,10 +222,10 @@ class ReplayMemory:
         sample = Sample(state, action, reward, next_state, is_terminal)
 
         if len(self._samples) == self.max_size:
-            self._samples[self.index]= sample
+            self._samples[self.index] = sample
         else:
             self._samples.append(sample)
-        self.index= (self.index + 1) % self.max_size
+        self.index = (self.index + 1) % self.max_size
 
     def end_episode(self, final_state, is_terminal):
         pass
@@ -243,4 +246,3 @@ class ReplayMemory:
 
     def __len__(self):
         return len(self._samples)
-
