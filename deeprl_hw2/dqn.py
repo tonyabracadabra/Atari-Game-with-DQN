@@ -56,6 +56,7 @@ class DQNAgent:
                  num_burn_in,
                  train_freq,
                  batch_size,
+                 experience_replay,
                  sess):
 
         self.q_network_online, self.q_network_target = q_networks
@@ -74,6 +75,7 @@ class DQNAgent:
         self.num_burn_in = num_burn_in
         self.batch_size = batch_size
         self.target_update_freq = target_update_freq
+        self.experience_replay = experience_replay
         self.sess = sess
 
     def compile(self, optimizer, loss_func):
@@ -164,7 +166,8 @@ class DQNAgent:
         # stack to the first dimension as batch size, which is gooood
         states = np.array([np.squeeze(sample.state) for sample in samples])
         actions = np.stack([sample.action for sample in samples])
-        y_vals = np.squeeze(np.stack(map(self._calc_y_double, samples)))
+        temp = map(self._calc_y_double, samples)
+        y_vals = np.squeeze(np.stack(temp))
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                                     feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
@@ -199,10 +202,21 @@ class DQNAgent:
 
         init = tf.global_variables_initializer()
         self.sess.run(init)
+        env.reset()
 
         iter_t = 0
         episode_count = 0
+
+        curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
+                                      [env.step(0)[0] for i in xrange(4)]), axis=2)
+        curr_state = np.expand_dims(curr_state, axis=0)
+        print "Start filling up the replay memory before update ..."
+        for j in xrange(self.num_burn_in):
+            next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
+        print "Has Prefilled the replay memory"
+
         while iter_t < num_iterations:
+            env.reset()
             # Get the initial state
             curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
                                       [env.step(0)[0] for i in xrange(4)]), axis=2)
@@ -210,15 +224,9 @@ class DQNAgent:
 
             episode_count += 1
             total_reward = 0
-            
-            print "Start " + str(episode_count) + "th Episode ..."
-            print "Start filling up the replay memory before update ..."
-            for j in xrange(self.num_burn_in):
-                next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
-                total_reward += reward
-            print "Has Prefilled the replay memory"
 
-            print "Start updating the network ..."
+            print "Start " + str(episode_count) + "th Episode ..."
+
             for j in xrange(max_episode_length):
                 iter_t += 1
                 next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
@@ -274,6 +282,10 @@ class DQNAgent:
 
         return next_state, reward, is_terminal
 
+    def evaluate_no_render(self):
+        pass
+
+
     def evaluate(self, env, num_episodes, max_episode_length=None):
         """Test your agent with a provided environment.
         
@@ -290,6 +302,7 @@ class DQNAgent:
 
         while num_episodes > 0:
             env = gym.make('SpaceInvaders-v0')
+            env.reset()
 
             # Get the initial state
             curr_state = np.stack(map(self.preprocessor.process_state_for_network, \

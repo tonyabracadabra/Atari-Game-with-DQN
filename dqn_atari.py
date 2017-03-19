@@ -164,9 +164,10 @@ def main():  # noqa: D103
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=50, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_burn_in', default=50, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_iterations', default=300, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_iterations', default=1000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--max_episode_length', default=300, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--train_freq', default=500, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
 
@@ -192,11 +193,12 @@ def main():  # noqa: D103
     policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 100)
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
-                             args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, sess)
+                             args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
+                             args.experience_replay, sess)
 
         optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)
-        dqn_agent.fit(env, args.num_iterations)
+        dqn_agent.fit(env, args.num_iterations, args.max_episode_length)
         dqn_agent.evaluate(env, 10)
 
     # while 1:
