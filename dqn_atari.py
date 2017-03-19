@@ -156,10 +156,10 @@ def main():  # noqa: D103
     parser.add_argument('--gamma', default=0.99, help='Discount factor')
     parser.add_argument('--alpha', default=0.0001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--target_update_freq', default=50, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_burn_in', default=50, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--target_update_freq', default=100, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_iterations', default=100000, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--max_episode_length', default=300, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--max_episode_length', default=1000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--train_freq', default=500, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--experience_replay', default=False, help='Choose whether or not to use experience replay')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
@@ -176,7 +176,7 @@ def main():  # noqa: D103
 
     # keras model
 
-    output_folder = get_output_folder("./result/", args.env)
+
 
     env = gym.make(args.env)
     num_actions = env.action_space.n
@@ -195,7 +195,7 @@ def main():  # noqa: D103
 
         optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)
-        dqn_agent.fit(env, args.num_iterations, output_folder, args.save_freq, args.max_episode_length)
+        dqn_agent.fit(env, args.num_iterations, args.output, args.save_freq, args.max_episode_length)
         # dqn_agent.evaluate(env, 10)
 
     # while 1:
