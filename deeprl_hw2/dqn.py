@@ -270,8 +270,7 @@ class DQNAgent:
         y_val = sample.reward
         if not sample.is_terminal:
             a = np.argmax(self.sess.run(self.q_values_online, feed_dict={self.state_online: sample.next_state}))
-            y_val += self.gamma * self.sess.run(self.q_values_target, feed_dict={self.state_target: sample.next_state})[
-                                  :, a]
+            y_val += self.gamma * self.sess.run(self.q_values_target, feed_dict={self.state_target: sample.next_state})[:, a]
 
         return y_val
 
