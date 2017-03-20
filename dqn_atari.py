@@ -154,7 +154,7 @@ def main():  # noqa: D103
     parser.add_argument('--batch_size', default=32, help='Batch size')
     parser.add_argument('--replay_buffer_size', default=100000, help='Replay buffer size')
     parser.add_argument('--gamma', default=0.99, help='Discount factor')
-    parser.add_argument('--alpha', default=0.0001, help='Learning rate')
+    parser.add_argument('--alpha', default=0.00001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
@@ -184,7 +184,21 @@ def main():  # noqa: D103
     q_network_target = create_model(args.window, args.new_size, num_actions)
 
     memory = ReplayMemory(args.replay_buffer_size, args.window)
-    policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
+    # policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
+    policy = GreedyEpsilonPolicy(args.epsilon)
+    
+
+    # load json and create model
+    with open('./atari-v0/300000.json', 'r') as json_file:
+        loaded_model_json = json_file.read()
+        q_network_online = model_from_json(loaded_model_json)
+        q_network_target = model_from_json(loaded_model_json)
+        # load weights into new model
+        q_network_online.load_weights("./atari-v0/300000.h5")
+        q_network_target.load_weights("./atari-v0/300000.h5")
+
+        print("Loaded model from disk")
+
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
                              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
