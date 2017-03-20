@@ -57,10 +57,10 @@ def create_model(window, input_shape, num_actions,
 
         state = Input(shape=input_shape)
         # First convolutional layer
-        x = Conv2D(16, (8, 8), (4, 4), border_mode='valid')(state)
+        x = Conv2D(filters = 16, kernel_size = (8, 8), strides = (4, 4), padding='valid')(state)
         x = Activation('relu')(x)
         # Second convolutional layer
-        x = Conv2D(32, (4, 4), (2, 2), border_mode='valid')(x)
+        x = Conv2D(filters = 32, kernel_size = (4, 4), strides = (2, 2), padding='valid')(x)
         x = Activation('relu')(x)
         # flatten the tensor
         x = Flatten()(x)
@@ -74,11 +74,11 @@ def create_model(window, input_shape, num_actions,
         input_shape = (input_shape[0], input_shape[1], window)
 
         state = Input(shape=input_shape)
-        # conv1
-        x = Conv2D(16, (8, 8), (4, 4), border_mode='valid')(state)
+        
+        x = Conv2D(filters = 16, kernel_size = (8, 8), strides = (4, 4), padding='valid')(state)
         x = Activation('relu')(x)
-        # conv2
-        x = Conv2D(32, (4, 4), (2, 2), border_mode='valid')(x)
+        # Second convolutional layer
+        x = Conv2D(filters = 32, kernel_size = (4, 4), strides = (2, 2), padding='valid')(x)
         x = Activation('relu')(x)
 
         x = Flatten()(x)
@@ -175,8 +175,6 @@ def main():  # noqa: D103
     # then you can run your fit method.
 
     # keras model
-
-
 
     env = gym.make(args.env)
     num_actions = env.action_space.n
