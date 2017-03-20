@@ -185,15 +185,15 @@ def main():  # noqa: D103
     parser.add_argument('--window', default=4, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), help='new size')
     parser.add_argument('--batch_size', default=32, help='Batch size')
-    parser.add_argument('--replay_buffer_size', default=100000, help='Replay buffer size')
+    parser.add_argument('--replay_buffer_size', default=1000000, help='Replay buffer size')
     parser.add_argument('--gamma', default=0.99, help='Discount factor')
-    parser.add_argument('--alpha', default=0.00001, help='Learning rate')
+    parser.add_argument('--alpha', default=0.0001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_iterations', default=4000000, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_burn_in', default=50, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_iterations', default=5000000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--max_episode_length', default=1000, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--train_freq', default=50, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--train_freq', default=32, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
@@ -223,6 +223,8 @@ def main():  # noqa: D103
     network_name = "q_network_deep"
     os.mkdir('./atari-v0/' + network_name)
     # load json and create model
+
+    # # load json and create model
     # with open('./atari-v0/300000.json', 'r') as json_file:
     #     loaded_model_json = json_file.read()
     #     q_network_online = model_from_json(loaded_model_json)
@@ -230,8 +232,6 @@ def main():  # noqa: D103
     #     # load weights into new model
     #     q_network_online.load_weights("./atari-v0/300000.h5")
     #     q_network_target.load_weights("./atari-v0/300000.h5")
-    #
-    #     print("Loaded model from disk")
 
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \

@@ -164,8 +164,8 @@ class DQNAgent:
 
         samples = self.memory.sample(self.batch_size)
         # stack to the first dimension as batch size, which is gooood
-        states = np.array([np.squeeze(sample.state) for sample in samples])
-        actions = np.stack([sample.action for sample in samples])
+        states = [sample[0] for sample in samples]
+        actions = [sample[2] for sample in samples]
         y_vals = np.squeeze(np.stack(map(self._calc_y, samples)))
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
@@ -217,6 +217,11 @@ class DQNAgent:
             curr_state = next_state
         print "Has Prefilled the replay memory"
 
+        samples = self.memory.sample(self.batch_size)
+
+        print samples[0][0].shape
+        print samples[0][1].shape
+
         while iter_t < num_iterations:
             env.reset()
             # Get the initial state
@@ -228,14 +233,14 @@ class DQNAgent:
             print "Start " + str(episode_count) + "th Episode ..."
 
             for j in xrange(max_episode_length):
-                if iter_t % save_freq == 0:
-                    self.evaluate_no_render()
-                    model_json = self.q_network_online.to_json()
-                    with open(output_folder + '/' + str(iter_t) + ".json", "w") as json_file:
-                        json_file.write(model_json)
-                    # serialize weights to HDF5
-                        self.q_network_online.save_weights(output_folder + '/' + str(iter_t) + ".h5")
-                    print("Saved model to disk")
+                # if iter_t % save_freq == 0:
+                #     self.evaluate_no_render()
+                #     model_json = self.q_network_online.to_json()
+                #     with open(output_folder + '/' + str(iter_t) + ".json", "w") as json_file:
+                #         json_file.write(model_json)
+                #     # serialize weights to HDF5
+                #         self.q_network_online.save_weights(output_folder + '/' + str(iter_t) + ".h5")
+                #     print("Saved model to disk")
                 iter_t += 1
 
                 next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
@@ -260,10 +265,11 @@ class DQNAgent:
 
 
     def _calc_y(self, sample):
-        y_val = sample.reward
-        if not sample.is_terminal:
+        state, next_state, reward, is_terminal = sample
+        y_val = reward
+        if not is_terminal:
             y_val += self.gamma * np.max(
-                self.sess.run(self.q_values_target, feed_dict={self.state_target: sample.next_state}))
+                self.sess.run(self.q_values_target, feed_dict={self.state_target: next_state}))
 
         return y_val
 
@@ -278,15 +284,15 @@ class DQNAgent:
     def _append_to_memory(self, curr_state, env):
         action = self.select_action(curr_state)
         # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
-        next_state, reward, is_terminal, _ = env.step(action)
+        next_frame, reward, is_terminal, _ = env.step(action)
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
-        next_state = self.preprocessor.process_state_for_memory(next_state)
-        next_state = np.expand_dims(next_state, axis=2)
+        next_frame = self.preprocessor.process_state_for_memory(next_frame)
+        next_state = np.expand_dims(next_frame, axis=2)
         next_state = np.expand_dims(next_state, axis=0)
         # append the next state to the last 3 frames in currstate to form the new state
         next_state = np.append(curr_state[:, :, :, 1:], next_state, axis=3)
 
-        self.memory.append(curr_state, action, reward, next_state, is_terminal)
+        self.memory.append(next_frame, action, reward, is_terminal)
 
         return next_state, reward, is_terminal
 
@@ -340,7 +346,7 @@ class DQNAgent:
         You can also call the render function here if you want to
         visually inspect your policy.
         """
-
+        k = 4
         while num_episodes > 0:
             env = gym.make('SpaceInvaders-v0')
             env.reset()
@@ -351,9 +357,12 @@ class DQNAgent:
             curr_state = np.expand_dims(curr_state, axis=0)
 
             is_terminal = False
+
+            i = 0
             while not is_terminal:
                 env.render()
-                action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
+                if i % k == 0:
+                    action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
                 next_state, reward, is_terminal, _ = env.step(action)
 
                 next_state = self.preprocessor.process_state_for_network(next_state)
@@ -363,5 +372,7 @@ class DQNAgent:
                 next_state = np.append(curr_state[:, :, :, 1:], next_state, axis=3)
 
                 curr_state = next_state
+
+                i += 1
 
             num_episodes -= 1
