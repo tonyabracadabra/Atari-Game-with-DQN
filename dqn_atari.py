@@ -6,8 +6,9 @@ import random
 
 import numpy as np
 import tensorflow as tf
-from keras.layers import (Activation, Conv2D, Dense, Flatten, Input, Permute)
+from keras.layers import (Activation, Conv2D, Dense, Flatten, Input, Permute, RepeatVector, Reshape, Lambda)
 from keras.models import model_from_json
+from keras.layers.merge import Add, Average
 
 from keras.models import Model
 
@@ -20,9 +21,11 @@ from deeprl_hw2.policy import *
 
 import gym
 
+import keras.backend as K
+
 
 def create_model(window, input_shape, num_actions,
-                      model_name='q_network_deep'):  # noqa: D103
+                 model_name='q_network_deep'):  # noqa: D103
     """Create the Deep-Q-network model.
 
     Use Keras to construct a keras.models.Model instance (you can also
@@ -50,55 +53,85 @@ def create_model(window, input_shape, num_actions,
     keras.models.Model
       The Q-model.
     """
+
+    input_shape = (input_shape[0], input_shape[1], window)
+
+    state = Input(shape=input_shape)
+
     model = None
-    if model_name is "q_network_deep" or "q_network_double":
+    if model_name is "q_network_deep":
 
-        input_shape = (input_shape[0], input_shape[1], window)
-
-        state = Input(shape=input_shape)
         # First convolutional layer
-        x = Conv2D(filters = 16, kernel_size = (8, 8), strides = (4, 4), padding='valid')(state)
+        x = Conv2D(filters=16, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
         x = Activation('relu')(x)
         # Second convolutional layer
-        x = Conv2D(filters = 32, kernel_size = (4, 4), strides = (2, 2), padding='valid')(x)
+        x = Conv2D(filters=32, kernel_size=(4, 4), strides=(2, 2), padding='valid')(x)
         x = Activation('relu')(x)
         # flatten the tensor
         x = Flatten()(x)
         x = Dense(256)(x)
+        x = Activation('relu')(x)
+        # output layer
+        y_pred = Dense(num_actions)(x)
+
+        model = Model(input=state, output=y_pred)
+
+    elif model_name is "q_network_double":
+
+        # First convolutional layer
+        x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
+        x = Activation('relu')(x)
+        # Second convolutional layer
+        x = Conv2D(filters=64, kernel_size=(4, 4), strides=(2, 2), padding='valid')(x)
+        x = Activation('relu')(x)
+        # Third convolutional layer
+        x = Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid')(x)
+        x = Activation('relu')(x)
+        # flatten the tensor
+        x = Flatten()(x)
+        x = Dense(512)(x)
+        x = Activation('relu')(x)
         # output layer
         y_pred = Dense(num_actions)(x)
 
         model = Model(input=state, output=y_pred)
 
     elif model_name is "q_network_duel":
-        input_shape = (input_shape[0], input_shape[1], window)
 
-        state = Input(shape=input_shape)
-
-        x = Conv2D(filters = 16, kernel_size = (8, 8), strides = (4, 4), padding='valid')(state)
+        # First convolutional layer
+        x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
         x = Activation('relu')(x)
         # Second convolutional layer
-        x = Conv2D(filters = 32, kernel_size = (4, 4), strides = (2, 2), padding='valid')(x)
+        x = Conv2D(filters=64, kernel_size=(4, 4), strides=(2, 2), padding='valid')(x)
+        x = Activation('relu')(x)
+        # Third convolutional layer
+        x = Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid')(x)
         x = Activation('relu')(x)
 
         x = Flatten()(x)
+
         # value output
-        x_val = Dense(256)(x)
+        x_val = Dense(512)(x)
+        x_val = Activation('relu')(x_val)
         y_val = Dense(1)(x_val)
+        y_val = RepeatVector(num_actions)(y_val)
+        y_val = Reshape((num_actions,))(y_val)
 
         # advantage output
-        x_advantage = Dense(256)(x)
+        x_advantage = Dense(512)(x)
+        x_advantage = Activation('relu')(x_advantage)
         y_advantage = Dense(num_actions)(x_advantage)
         # mean advantage
-        y_advantage_mean = tf.reduce_mean(y_advantage, axis=1)
+        y_advantage_mean = Lambda(lambda x: K.mean(x, axis=1, keepdims=True))(y_advantage)
+        y_advantage_mean = RepeatVector(num_actions)(y_advantage_mean)
+        y_advantage_mean = Reshape((num_actions,))(y_advantage_mean)
 
-        y_q = y_val + y_advantage - y_advantage_mean
+        y_q = Add()([y_val, y_advantage, y_advantage_mean])
 
         model = Model(input=state, output=y_q)
 
     elif model_name is "q_network_linear":
-        input_shape = (input_shape[0], input_shape[1], window)
-        state = Input(shape=input_shape)
+
         x = Flatten()(state)
         x = Dense(256)(x)
 
@@ -180,24 +213,25 @@ def main():  # noqa: D103
     num_actions = env.action_space.n
 
     preprocessor = AtariPreprocessor(args.new_size)
-    q_network_online = create_model(args.window, args.new_size, num_actions)
-    q_network_target = create_model(args.window, args.new_size, num_actions)
+    q_network_online = create_model(args.window, args.new_size, num_actions, 'q_network_duel')
+    q_network_target = create_model(args.window, args.new_size, num_actions, 'q_network_duel')
 
     memory = ReplayMemory(args.replay_buffer_size, args.window)
     # policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
     policy = GreedyEpsilonPolicy(args.epsilon)
-    
 
+    network_name = "q_network_deep"
+    os.mkdir('./atari-v0/' + network_name)
     # load json and create model
-    with open('./atari-v0/300000.json', 'r') as json_file:
-        loaded_model_json = json_file.read()
-        q_network_online = model_from_json(loaded_model_json)
-        q_network_target = model_from_json(loaded_model_json)
-        # load weights into new model
-        q_network_online.load_weights("./atari-v0/300000.h5")
-        q_network_target.load_weights("./atari-v0/300000.h5")
-
-        print("Loaded model from disk")
+    # with open('./atari-v0/300000.json', 'r') as json_file:
+    #     loaded_model_json = json_file.read()
+    #     q_network_online = model_from_json(loaded_model_json)
+    #     q_network_target = model_from_json(loaded_model_json)
+    #     # load weights into new model
+    #     q_network_online.load_weights("./atari-v0/300000.h5")
+    #     q_network_target.load_weights("./atari-v0/300000.h5")
+    #
+    #     print("Loaded model from disk")
 
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
@@ -206,16 +240,8 @@ def main():  # noqa: D103
 
         optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)
-        dqn_agent.fit(env, args.num_iterations, args.output, args.save_freq, args.max_episode_length)
-        # dqn_agent.evaluate(env, 10)
-
-    # while 1:
-    #     env = gym.make('SpaceInvaders-v0')
-    #     action = 5
-    #     nextstate, reward, is_terminal, debug_info = env.step(action)
-    #     while not is_terminal:
-    #         nextstate, reward, is_terminal, debug_info = env.step(action)
-    #         env.render()
+        dqn_agent.fit(env, args.num_iterations, args.output + network_name + '/', args.save_freq,
+                      args.max_episode_length)
 
 
 if __name__ == '__main__':
