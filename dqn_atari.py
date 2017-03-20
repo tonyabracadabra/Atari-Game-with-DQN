@@ -6,7 +6,7 @@ import random
 
 import numpy as np
 import tensorflow as tf
-from keras.layers import (Activation, Convolution2D, Dense, Flatten, Input, Permute)
+from keras.layers import (Activation, Conv2D, Dense, Flatten, Input, Permute)
 
 
 from keras.models import Model
@@ -75,10 +75,10 @@ def create_model_deep(window, input_shape, num_actions,
 
         state = Input(shape=input_shape)
         # conv1
-        x = Convolution2D(16, 8, 8, border_mode='valid')(state)
+        x = Conv2D(16, 8, 4, border_mode='valid')(state)
         x = Activation('relu')(x)
         # conv2
-        x = Convolution2D(32, 4, 4, border_mode='valid')(x)
+        x = Conv2D(32, 4, 2, border_mode='valid')(x)
         x = Activation('relu')(x)
 
         x = Flatten()(x)
@@ -150,15 +150,15 @@ def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
     parser.add_argument('--window', default=4, help='how many frames are used each time')
-    parser.add_argument('--new_size', default=(80, 80), help='new size')
+    parser.add_argument('--new_size', default=(84, 84), help='new size')
     parser.add_argument('--batch_size', default=32, help='Batch size')
-    parser.add_argument('--replay_buffer_size', default=1000000, help='Replay buffer size')
+    parser.add_argument('--replay_buffer_size', default=800000, help='Replay buffer size')
     parser.add_argument('--gamma', default=0.99, help='Discount factor')
     parser.add_argument('--alpha', default=0.0001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--target_update_freq', default=1000, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--target_update_freq', default=10000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_iterations', default=100000, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_iterations', default=4000000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--max_episode_length', default=1000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--train_freq', default=50, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
@@ -182,7 +182,6 @@ def main():  # noqa: D103
     num_actions = env.action_space.n
 
     preprocessor = AtariPreprocessor(args.new_size)
-
     q_network_online = create_model_deep(args.window, args.new_size, num_actions, "q_network_double")
     q_network_target = create_model_deep(args.window, args.new_size, num_actions, "q_network_double")
 

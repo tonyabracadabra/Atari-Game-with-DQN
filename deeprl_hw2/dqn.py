@@ -229,6 +229,7 @@ class DQNAgent:
 
             for j in xrange(max_episode_length):
                 if iter_t % save_freq == 0:
+                    self.evaluate_no_render()
                     model_json = self.q_network_online.to_json()
                     with open(output_folder + '/' + str(iter_t) + ".json", "w") as json_file:
                         json_file.write(model_json)
@@ -250,7 +251,7 @@ class DQNAgent:
                     self.sess.run(update_ops)
                 if iter_t % self.train_freq == 0:
                     loss_val = self.update_policy()
-                    print str(j) + "th iteration \n Loss val : " + str(loss_val)
+                    print str(iter_t) + "th iteration \n Loss val : " + str(loss_val)
                 curr_state = next_state
 
             # update again after the episode ends...
@@ -290,7 +291,40 @@ class DQNAgent:
         return next_state, reward, is_terminal
 
     def evaluate_no_render(self):
-        pass
+        num_episodes = 0
+        env = gym.make('SpaceInvaders-v0')
+
+        reward_avg = 0
+        print "Start evaluating ... "
+        while num_episodes < 20:
+            env.reset()
+            # Get the initial state
+            curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
+                                      [env.step(0)[0] for _ in xrange(4)]), axis=2)
+            curr_state = np.expand_dims(curr_state, axis=0)
+
+            is_terminal = False
+            total_reward = 0
+            while not is_terminal:
+                action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
+                next_state, reward, is_terminal, _ = env.step(action)
+                total_reward += reward
+
+                next_state = self.preprocessor.process_state_for_network(next_state)
+                next_state = np.expand_dims(next_state, axis=2)
+                next_state = np.expand_dims(next_state, axis=0)
+                # append the next state to the last 3 frames in currstate to form the new state
+                next_state = np.append(curr_state[:, :, :, 1:], next_state, axis=3)
+
+                curr_state = next_state
+
+            reward_avg += total_reward
+            num_episodes += 1
+
+        reward_avg /= 20
+
+        print "Average reward: " + str(reward_avg)
+
 
 
     def evaluate(self, env, num_episodes, max_episode_length=None):
