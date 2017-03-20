@@ -158,9 +158,9 @@ def main():  # noqa: D103
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_iterations', default=4000000, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--num_iterations', default=5000000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--max_episode_length', default=1000, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--train_freq', default=50, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--train_freq', default=32, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
@@ -188,16 +188,16 @@ def main():  # noqa: D103
     policy = GreedyEpsilonPolicy(args.epsilon)
     
 
-    # load json and create model
-    with open('./atari-v0/300000.json', 'r') as json_file:
-        loaded_model_json = json_file.read()
-        q_network_online = model_from_json(loaded_model_json)
-        q_network_target = model_from_json(loaded_model_json)
-        # load weights into new model
-        q_network_online.load_weights("./atari-v0/300000.h5")
-        q_network_target.load_weights("./atari-v0/300000.h5")
+    # # load json and create model
+    # with open('./atari-v0/300000.json', 'r') as json_file:
+    #     loaded_model_json = json_file.read()
+    #     q_network_online = model_from_json(loaded_model_json)
+    #     q_network_target = model_from_json(loaded_model_json)
+    #     # load weights into new model
+    #     q_network_online.load_weights("./atari-v0/300000.h5")
+    #     q_network_target.load_weights("./atari-v0/300000.h5")
 
-        print("Loaded model from disk")
+    #     print("Loaded model from disk")
 
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
