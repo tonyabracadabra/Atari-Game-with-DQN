@@ -7,7 +7,7 @@ import random
 import numpy as np
 import tensorflow as tf
 from keras.layers import (Activation, Conv2D, Dense, Flatten, Input, Permute)
-
+from keras.models import model_from_json
 
 from keras.models import Model
 
