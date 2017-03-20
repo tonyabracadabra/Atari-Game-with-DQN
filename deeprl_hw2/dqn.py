@@ -173,7 +173,7 @@ class DQNAgent:
 
         return loss_val
 
-    def fit(self, env, num_iterations, output_folder, save_freq=10000, max_episode_length=100):
+    def fit(self, env, num_iterations, output_folder, save_freq=10000, max_episode_length=100, train_freq=50):
         """Fit your model to the provided environment.
 
         Its a good idea to print out things like loss, average reward,
@@ -244,13 +244,13 @@ class DQNAgent:
                     break
 
                 # Time for updating (copy...) the target network
-                if j % self.target_update_freq == 0:
+                if iter_t % self.target_update_freq == 0:
                     update_ops = get_hard_target_model_updates(self.q_network_target, self.q_network_online)
                     # updating the parameters from the previous network
                     self.sess.run(update_ops)
-
-                loss_val = self.update_policy()
-                print str(j) + "th iteration \n Loss val : " + str(loss_val)
+                if iter_t % self.train_freq == 0:
+                    loss_val = self.update_policy()
+                    print str(j) + "th iteration \n Loss val : " + str(loss_val)
                 curr_state = next_state
 
             # update again after the episode ends...

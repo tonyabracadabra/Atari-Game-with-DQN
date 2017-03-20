@@ -160,11 +160,11 @@ def main():  # noqa: D103
     parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--num_iterations', default=100000, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--max_episode_length', default=1000, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--train_freq', default=500, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--train_freq', default=50, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
-    parser.add_argument('--save_freq', default=10000, type=int, help='model save frequency')
+    parser.add_argument('--save_freq', default=100000, type=int, help='model save frequency')
     args = parser.parse_args()
     # args.input_shape = tuple(args.input_shape)
 
