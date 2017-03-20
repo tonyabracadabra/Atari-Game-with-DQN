@@ -152,7 +152,7 @@ def main():  # noqa: D103
     parser.add_argument('--window', default=4, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), help='new size')
     parser.add_argument('--batch_size', default=32, help='Batch size')
-    parser.add_argument('--replay_buffer_size', default=100000, help='Replay buffer size')
+    parser.add_argument('--replay_buffer_size', default=1000000, help='Replay buffer size')
     parser.add_argument('--gamma', default=0.99, help='Discount factor')
     parser.add_argument('--alpha', default=0.0001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')

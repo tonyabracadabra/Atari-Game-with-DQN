@@ -5,4 +5,6 @@
 .idea/*
 
 # output folder
-./atari-v0/*
+atari-v0*
+
+nohup*
