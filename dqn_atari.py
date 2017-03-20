@@ -21,7 +21,7 @@ from deeprl_hw2.policy import *
 import gym
 
 
-def create_model_deep(window, input_shape, num_actions,
+def create_model(window, input_shape, num_actions,
                       model_name='q_network_deep'):  # noqa: D103
     """Create the Deep-Q-network model.
 
@@ -57,10 +57,10 @@ def create_model_deep(window, input_shape, num_actions,
 
         state = Input(shape=input_shape)
         # First convolutional layer
-        x = Convolution2D(16, 8, 8, border_mode='valid')(state)
+        x = Conv2D(16, 8, 4, border_mode='valid')(state)
         x = Activation('relu')(x)
         # Second convolutional layer
-        x = Convolution2D(32, 4, 4, border_mode='valid')(x)
+        x = Conv2D(32, 4, 2, border_mode='valid')(x)
         x = Activation('relu')(x)
         # flatten the tensor
         x = Flatten()(x)
@@ -182,8 +182,8 @@ def main():  # noqa: D103
     num_actions = env.action_space.n
 
     preprocessor = AtariPreprocessor(args.new_size)
-    q_network_online = create_model_deep(args.window, args.new_size, num_actions, "q_network_double")
-    q_network_target = create_model_deep(args.window, args.new_size, num_actions, "q_network_double")
+    q_network_online = create_model(args.window, args.new_size, num_actions)
+    q_network_target = create_model(args.window, args.new_size, num_actions)
 
     memory = ReplayMemory(args.replay_buffer_size, args.window)
     policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
