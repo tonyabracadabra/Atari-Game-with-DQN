@@ -144,7 +144,7 @@ class DQNAgent:
 
         q_values_val = self.calc_q_values(state)
 
-        return self.policy.select_action(q_values_val, True)
+        return self.policy.select_action(q_values_val)
 
     def update_policy(self):
         """Update your policy.
