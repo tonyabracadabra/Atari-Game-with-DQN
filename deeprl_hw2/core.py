@@ -1,7 +1,7 @@
 """Core classes."""
 
 import random
-
+import numpy as np
 
 class Sample:
     """Represents a reinforcement learning sample.
@@ -34,12 +34,10 @@ class Sample:
       True if this action finished the episode. False otherwise.
     """
 
-    def __init__(self, state, action, reward, next_state, is_terminal):
-        self.state = state
+    def __init__(self, frame, action, reward):
+        self.frame = frame
         self.action = action
         self.reward = reward
-        self.next_state = next_state
-        self.is_terminal = is_terminal
 
 
 class Preprocessor:
@@ -217,23 +215,51 @@ class ReplayMemory:
         self.window_length = window_length
         self.index = 0
         self._samples = []
+        self._terminal = set()
 
-    def append(self, state, action, reward, next_state, is_terminal):
-        sample = Sample(state, action, reward, next_state, is_terminal)
+    def append(self, next_frame, action, reward, is_terminal):
+        sample = Sample(next_frame, action, reward)
+
+        if is_terminal:
+            _end_episode(self.index)
 
         if len(self._samples) == self.max_size:
             self._samples[self.index] = sample
         else:
             self._samples.append(sample)
+
         self.index = (self.index + 1) % self.max_size
 
-    def end_episode(self, final_state, is_terminal):
-        pass
+    def _end_episode(self, final_index):
+        self._terminal.add(final_index)
 
     def sample(self, batch_size, indexes=None):
-        random_indexes = random.sample(xrange(len(self._samples)), batch_size)
+        random_indexes = []
+        while len(random_indexes) < batch_size:
+            new_random_indexes = random.sample(xrange(len(self._samples)), batch_size - len(random_indexes))
+            if_valid = lambda x : x + 4 < self.index and \
+                                  (x not in self._terminal) and \
+                                  (x + 1 % self.max_size not in self._terminal) and \
+                                  (x + 2 % self.max_size not in self._terminal) and \
+                                  (x + 3 % self.max_size not in self._terminal)
 
-        return [self._samples[i] for i in random_indexes]
+            new_random_indexes = filter(if_valid, new_random_indexes)
+            random_indexes.extend(new_random_indexes)
+
+        random_samples = []
+        is_terminal = []
+        for i in random_indexes:
+            random_samples.append(self._samples[i : i + 5])
+            is_terminal.append(True if i + 3 % self.max_size in self._terminal else False)
+
+        print len(random_samples[0])
+        print random_samples[0][0].frame.shape
+        # print [len([i.frame for i in samples]) for samples in random_samples]
+        states = [np.stack([s.frame for s in samples[:4]], axis=2) for samples in random_samples]
+        next_states = [np.stack([s.frame for s in samples[1:]], axis=2) for samples in random_samples]
+        actions = [s[-1].action for s in random_samples]
+
+        return zip(states, next_states, actions, is_terminal)
 
     def clear(self):
         self._samples = []
