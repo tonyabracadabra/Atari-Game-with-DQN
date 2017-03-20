@@ -74,7 +74,7 @@ def create_model(window, input_shape, num_actions,
         input_shape = (input_shape[0], input_shape[1], window)
 
         state = Input(shape=input_shape)
-        
+
         x = Conv2D(filters = 16, kernel_size = (8, 8), strides = (4, 4), padding='valid')(state)
         x = Activation('relu')(x)
         # Second convolutional layer
@@ -152,7 +152,7 @@ def main():  # noqa: D103
     parser.add_argument('--window', default=4, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), help='new size')
     parser.add_argument('--batch_size', default=32, help='Batch size')
-    parser.add_argument('--replay_buffer_size', default=800000, help='Replay buffer size')
+    parser.add_argument('--replay_buffer_size', default=100000, help='Replay buffer size')
     parser.add_argument('--gamma', default=0.99, help='Discount factor')
     parser.add_argument('--alpha', default=0.0001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
