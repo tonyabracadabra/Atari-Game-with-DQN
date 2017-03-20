@@ -306,7 +306,7 @@ class DQNAgent:
             is_terminal = False
             total_reward = 0
             while not is_terminal:
-                action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
+                action = np.argmax(self.sess.run(self.q_values_online, feed_dict={self.state_online: curr_state}))
                 next_state, reward, is_terminal, _ = env.step(action)
                 total_reward += reward
 
