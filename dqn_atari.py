@@ -57,10 +57,10 @@ def create_model(window, input_shape, num_actions,
 
         state = Input(shape=input_shape)
         # First convolutional layer
-        x = Conv2D(16, 8, 4, border_mode='valid')(state)
+        x = Conv2D(16, (8, 8), (4, 4), border_mode='valid')(state)
         x = Activation('relu')(x)
         # Second convolutional layer
-        x = Conv2D(32, 4, 2, border_mode='valid')(x)
+        x = Conv2D(32, (4, 4), (2, 2), border_mode='valid')(x)
         x = Activation('relu')(x)
         # flatten the tensor
         x = Flatten()(x)
@@ -75,10 +75,10 @@ def create_model(window, input_shape, num_actions,
 
         state = Input(shape=input_shape)
         # conv1
-        x = Conv2D(16, 8, 4, border_mode='valid')(state)
+        x = Conv2D(16, (8, 8), (4, 4), border_mode='valid')(state)
         x = Activation('relu')(x)
         # conv2
-        x = Conv2D(32, 4, 2, border_mode='valid')(x)
+        x = Conv2D(32, (4, 4), (2, 2), border_mode='valid')(x)
         x = Activation('relu')(x)
 
         x = Flatten()(x)
