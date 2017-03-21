@@ -164,7 +164,7 @@ class DQNAgent:
 
         states, next_states, actions, rewards, not_terminal = self.memory.sample(self.batch_size)
 
-        y_vals = self._calc_y(next_states, rewards, not_terminal)
+        y_vals = self._calc_y_double(next_states, rewards, not_terminal)
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                                     feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
@@ -255,6 +255,7 @@ class DQNAgent:
                 if iter_t % self.train_freq == 0:
                     loss_val = self.update_policy()
                     print str(iter_t) + "th iteration \n Loss val : " + str(loss_val)
+
                 curr_state = next_state
 
             # update again after the episode ends...
@@ -271,13 +272,20 @@ class DQNAgent:
 
         return y_vals
 
-    def _calc_y_double(self, sample):
-        y_val = sample.reward
-        if not sample.is_terminal:
-            a = np.argmax(self.sess.run(self.q_values_online, feed_dict={self.state_online: sample.next_state}))
-            y_val += self.gamma * self.sess.run(self.q_values_target, feed_dict={self.state_target: sample.next_state})[:, a]
+    def _calc_y_double(self, next_states, rewards, not_terminal):
+        y_vals = rewards
 
-        return y_val
+        a = np.argmax(self.sess.run(self.q_values_online, \
+                      feed_dict={self.state_online: next_states}), axis = 1)
+
+        temp = self.gamma * self.sess.run(self.q_values_target, \
+                      feed_dict={self.state_target: next_states})
+        
+        added_vals = temp[np.arange(self.batch_size), a]
+
+        y_vals[not_terminal] += added_vals[not_terminal]
+
+        return y_vals
 
     def _append_to_memory(self, curr_state, env):
         action = self.select_action(curr_state)
@@ -285,10 +293,11 @@ class DQNAgent:
         next_frame, reward, is_terminal, _ = env.step(action)
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
         next_frame = self.preprocessor.process_state_for_memory(next_frame)
-        next_state = np.expand_dims(next_frame, axis=2)
-        next_state = np.expand_dims(next_state, axis=0)
+
+        next_state = np.expand_dims(next_frame, axis = 2)
+        next_state = np.expand_dims(next_state, axis = 0)
         # append the next state to the last 3 frames in currstate to form the new state
-        next_state = np.append(curr_state[:, :, :, 1:], next_state, axis=3)
+        next_state = np.append(curr_state[:, :, :, 1:], next_state, axis = 3)
 
         self.memory.append(next_frame, action, reward, is_terminal)
 
@@ -374,3 +383,6 @@ class DQNAgent:
                 i += 1
 
             num_episodes -= 1
+
+    def print_info(self):
+        print 
