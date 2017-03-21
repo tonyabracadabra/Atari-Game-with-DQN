@@ -236,10 +236,10 @@ class DQNAgent:
                 if iter_t % save_freq == 0:
                     self.evaluate_no_render()
                     model_json = self.q_network_online.to_json()
-                    with open(output_folder + '/' + str(iter_t) + ".json", "w") as json_file:
+                    with open(output_folder + str(iter_t) + ".json", "w") as json_file:
                         json_file.write(model_json)
                         # serialize weights to HDF5
-                        self.q_network_online.save_weights(output_folder + '/' + str(iter_t) + ".h5")
+                        self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
                     print("Saved model to disk")
 
                 iter_t += 1
@@ -271,7 +271,6 @@ class DQNAgent:
 
     def _calc_y(self, next_states, rewards, not_terminal):
         y_vals = rewards
-
         # Calculating y values for q_network double
         if self.network_name is "q_network_double":
             actions = np.argmax(self.sess.run(self.q_values_online, \
