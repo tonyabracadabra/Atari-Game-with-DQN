@@ -162,11 +162,9 @@ class DQNAgent:
         output. They can help you monitor how training is going.
         """
 
-        samples = self.memory.sample(self.batch_size)
-        # stack to the first dimension as batch size, which is gooood
-        states = [sample[0] for sample in samples]
-        actions = [sample[2] for sample in samples]
-        y_vals = np.squeeze(np.stack(map(self._calc_y, samples)))
+        states, next_states, actions, rewards, not_terminal = self.memory.sample(self.batch_size)
+
+        y_vals = self._calc_y(next_states, rewards, not_terminal)
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                                     feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
@@ -264,14 +262,14 @@ class DQNAgent:
             print str(episode_count) + "th Episode:\n" + "Reward: " + str(total_reward) + "\n Loss:" + str(loss_val)
 
 
-    def _calc_y(self, sample):
-        state, next_state, reward, is_terminal = sample
-        y_val = reward
-        if not is_terminal:
-            y_val += self.gamma * np.max(
-                self.sess.run(self.q_values_target, feed_dict={self.state_target: next_state}))
+    def _calc_y(self, next_states, rewards, not_terminal):
+        y_vals = rewards
+        added_vals = self.gamma * np.max(self.sess.run(self.q_values_target, \
+                                  feed_dict={self.state_target: next_states}), axis = 1)
 
-        return y_val
+        y_vals[not_terminal] += added_vals[not_terminal]
+
+        return y_vals
 
     def _calc_y_double(self, sample):
         y_val = sample.reward

@@ -221,7 +221,7 @@ class ReplayMemory:
         sample = Sample(next_frame, action, reward)
 
         if is_terminal:
-            _end_episode(self.index)
+            self._end_episode(self.index)
 
         if len(self._samples) == self.max_size:
             self._samples[self.index] = sample
@@ -237,7 +237,7 @@ class ReplayMemory:
         random_indexes = []
         while len(random_indexes) < batch_size:
             new_random_indexes = random.sample(xrange(len(self._samples)), batch_size - len(random_indexes))
-            if_valid = lambda x : x + 4 < self.index and \
+            if_valid = lambda x : (x + 4 < self.index or x > self.index) and \
                                   (x not in self._terminal) and \
                                   (x + 1 % self.max_size not in self._terminal) and \
                                   (x + 2 % self.max_size not in self._terminal) and \
@@ -247,19 +247,18 @@ class ReplayMemory:
             random_indexes.extend(new_random_indexes)
 
         random_samples = []
-        is_terminal = []
+        not_terminal = []
         for i in random_indexes:
             random_samples.append(self._samples[i : i + 5])
-            is_terminal.append(True if i + 3 % self.max_size in self._terminal else False)
+            not_terminal.append(False if i + 3 % self.max_size in self._terminal else True)
 
-        print len(random_samples[0])
-        print random_samples[0][0].frame.shape
         # print [len([i.frame for i in samples]) for samples in random_samples]
-        states = [np.stack([s.frame for s in samples[:4]], axis=2) for samples in random_samples]
-        next_states = [np.stack([s.frame for s in samples[1:]], axis=2) for samples in random_samples]
-        actions = [s[-1].action for s in random_samples]
+        states = np.stack([np.stack([s.frame for s in samples[:4]], axis=2) for samples in random_samples])
+        next_states = np.stack([np.stack([s.frame for s in samples[1:]], axis=2) for samples in random_samples])
+        actions = np.stack([s[-1].action for s in random_samples])
+        rewards = np.stack([s[-1].reward for s in random_samples])
 
-        return zip(states, next_states, actions, is_terminal)
+        return (states, next_states, actions, rewards, not_terminal)
 
     def clear(self):
         self._samples = []
