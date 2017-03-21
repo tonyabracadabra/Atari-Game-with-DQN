@@ -58,7 +58,8 @@ class DQNAgent:
                  batch_size,
                  experience_replay,
                  repetition_times,
-                 sess):
+                 sess,
+                 network_name):
 
         self.q_network_online, self.q_network_target = q_networks
         self.q_values_online = self.q_network_online.output
@@ -79,6 +80,7 @@ class DQNAgent:
         self.experience_replay = experience_replay
         self.repetition_times = repetition_times
         self.sess = sess
+        self.network_name = network_name
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -165,8 +167,10 @@ class DQNAgent:
         """
 
         states, next_states, actions, rewards, not_terminal = self.memory.sample(self.batch_size)
-
-        y_vals = self._calc_y(next_states, rewards, not_terminal)
+        if self.network_name is "q_network_double":
+            y_vals = self._calc_y_double(next_states, rewards, not_terminal)
+        else:
+            y_vals = self._calc_y(next_states, rewards, not_terminal)
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                                     feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
@@ -388,4 +392,4 @@ class DQNAgent:
             num_episodes -= 1
 
     def print_info(self):
-        print 
+        print

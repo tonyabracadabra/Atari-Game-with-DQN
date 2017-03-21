@@ -182,6 +182,7 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
+    parser.add_argument('--network', default='q_network_deep', help='Type of model to use')
     parser.add_argument('--window', default=4, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), help='new size')
     parser.add_argument('--batch_size', default=32, help='Batch size')
@@ -200,6 +201,10 @@ def main():  # noqa: D103
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--save_freq', default=100000, type=int, help='model save frequency')
     args = parser.parse_args()
+    print("\nParameters:")
+    for arg in vars(args):
+        print arg, getattr(args, arg)
+    print("")
     # args.input_shape = tuple(args.input_shape)
 
     # args.output = get_output_folder(args.output, args.env)
@@ -221,8 +226,8 @@ def main():  # noqa: D103
     # policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
     policy = GreedyEpsilonPolicy(args.epsilon)
 
-    network_name = "q_network_duel"
-    # os.mkdir('./atari-v0/' + network_name)
+
+    # os.mkdir('./atari-v0/' + args.network_name)
     # load json and create model
 
     # # load json and create model
@@ -237,11 +242,11 @@ def main():  # noqa: D103
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
                              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
-                             args.experience_replay, args.repetition_times, sess)
+                             args.experience_replay, args.repetition_times, sess, args.network_name)
 
         optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)
-        dqn_agent.fit(env, args.num_iterations, args.output + network_name + '/', args.save_freq,
+        dqn_agent.fit(env, args.num_iterations, args.output + args.network_name + '/', args.save_freq,
                       args.max_episode_length)
 
 
