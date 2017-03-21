@@ -58,6 +58,7 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
     model = None
 
     if model_name == "q_network_deep":
+        print "Building " + model_name + " ..."
 
         # First convolutional layer
         x = Conv2D(filters=16, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
@@ -75,8 +76,9 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
         model = Model(input=state, output=y_pred)
 
     elif model_name == "q_network_double":
-        print 'create double dqn'
-        # First convolutional layer
+        print "Building " + model_name + " ..."
+
+       # First convolutional layer
         x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
         x = Activation('relu')(x)
         # Second convolutional layer
@@ -95,8 +97,9 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
         model = Model(input=state, output=y_pred)
 
     elif model_name == "q_network_duel":
-
-        # First convolutional layer
+        print "Building " + model_name + " ..."
+        
+       # First convolutional layer
         x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
         x = Activation('relu')(x)
         # Second convolutional layer

@@ -104,21 +104,21 @@ class DQNAgent:
         """
 
         with tf.variable_scope('optimizer'):
-                # print self.q_values_online.shape
-                # Placeholder that we want to feed the updat in, just one value
-                self.y_true = tf.placeholder(tf.float32, [None, ])
-                # Placeholder that specify which action
-                self.action = tf.placeholder(tf.int32, [None,])
-                # Transform it to one hot representation
-                self.action_one_hot = tf.cast(tf.one_hot(self.action, depth = self.num_actions, \
-                                              on_value=1, off_value=0), tf.float32)
+            # print self.q_values_online.shape
+            # Placeholder that we want to feed the updat in, just one value
+            self.y_true = tf.placeholder(tf.float32, [None, ])
+            # Placeholder that specify which action
+            self.action = tf.placeholder(tf.int32, [None,])
+            # Transform it to one hot representation
+            self.action_one_hot = tf.cast(tf.one_hot(self.action, depth = self.num_actions, \
+                                          on_value=1, off_value=0), tf.float32)
 
-                # the output of the q_network is y_pred
-                self.y_pred = tf.reduce_sum(tf.multiply(self.q_values_online, self.action_one_hot), axis=1)
+            # the output of the q_network is y_pred
+            self.y_pred = tf.reduce_sum(tf.multiply(self.q_values_online, self.action_one_hot), axis=1)
 
-                self.loss = loss_func(self.y_true, self.y_pred)
+            self.loss = loss_func(self.y_true, self.y_pred)
 
-                self.optimizer = optimizer.minimize(self.loss)
+            self.optimizer = optimizer.minimize(self.loss)
 
     def calc_q_values(self, state):
         """Given a state (or batch of states) calculate the Q-values.
@@ -190,8 +190,6 @@ class DQNAgent:
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                         feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
 
-
-
         return loss_val
 
     def fit(self, env, num_iterations, output_folder, save_freq=10000, max_episode_length=100, train_freq=50):
@@ -233,12 +231,14 @@ class DQNAgent:
         init_state = np.stack(map(self.preprocessor.process_state_for_network, \
                                   [env.step(0)[0] for i in xrange(4)]), axis = 2)
         curr_state = init_state
-        print "Start filling up the replay memory before update ..."
-        for j in xrange(self.num_burn_in):
-            action = self.select_action(curr_state)
-            next_state, reward, is_terminal = self._append_to_memory(curr_state, action, env)
-            curr_state = next_state
-        print "Has Prefilled the replay memory"
+
+        if self.experience_replay:
+            print "Start filling up the replay memory before update ..."
+            for j in xrange(self.num_burn_in):
+                action = self.select_action(curr_state)
+                next_state, reward, is_terminal = self._append_to_memory(curr_state, action, env)
+                curr_state = next_state
+            print "Has Prefilled the replay memory"
 
         while iter_t < num_iterations:
             env.reset()
@@ -252,14 +252,14 @@ class DQNAgent:
             print "Start " + str(episode_count) + "th Episode ..."
             action_count = 0
             for j in xrange(max_episode_length):
-                # if iter_t % save_freq == 0:
-                #     self.evaluate_no_render()
-                #     model_json = self.q_network_online.to_json()
-                #     with open(output_folder + str(iter_t) + ".json", "w") as json_file:
-                #         json_file.write(model_json)
-                #         # serialize weights to HDF5
-                #         self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
-                #     print("Saved model to disk")
+                if iter_t % save_freq == 0:
+                    self.evaluate_no_render()
+                    model_json = self.q_network_online.to_json()
+                    with open(output_folder + str(iter_t) + ".json", "w") as json_file:
+                        json_file.write(model_json)
+                        # serialize weights to HDF5
+                        self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
+                    print("Saved model to disk")
 
                 iter_t += 1
                 if action_count == self.repetition_times:
