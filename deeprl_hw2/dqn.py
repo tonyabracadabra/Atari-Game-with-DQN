@@ -58,7 +58,7 @@ class DQNAgent:
                  batch_size,
                  experience_replay,
                  repetition_times,
-                 args.network_name,
+                 network_name,
                  sess):
 
         self.q_network_online, self.q_network_target = q_networks
@@ -238,7 +238,7 @@ class DQNAgent:
                     model_json = self.q_network_online.to_json()
                     with open(output_folder + '/' + str(iter_t) + ".json", "w") as json_file:
                         json_file.write(model_json)
-                    # serialize weights to HDF5
+                        # serialize weights to HDF5
                         self.q_network_online.save_weights(output_folder + '/' + str(iter_t) + ".h5")
                     print("Saved model to disk")
 
@@ -275,16 +275,16 @@ class DQNAgent:
         # Calculating y values for q_network double
         if self.network_name is "q_network_double":
             actions = np.argmax(self.sess.run(self.q_values_online, \
-                      feed_dict={self.state_online: next_states}), axis = 1)
+                                              feed_dict={self.state_online: next_states}), axis=1)
 
             q_vals = self.gamma * self.sess.run(self.q_values_target, \
-                          feed_dict={self.state_target: next_states})
+                                                feed_dict={self.state_target: next_states})
 
             added_vals = q_vals[np.arange(self.batch_size), actions]
         else:
-        # Calculating y values for q_network_deep and q_network_duel
+            # Calculating y values for q_network_deep and q_network_duel
             added_vals = self.gamma * np.max(self.sess.run(self.q_values_target, \
-                           feed_dict={self.state_target: next_states}), axis=1)
+                                                           feed_dict={self.state_target: next_states}), axis=1)
 
         y_vals[not_terminal] += added_vals[not_terminal]
 
@@ -296,12 +296,12 @@ class DQNAgent:
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
         next_frame = self.preprocessor.process_state_for_memory(next_frame)
 
-        next_state = np.expand_dims(next_frame, axis = 2)
-        next_state = np.expand_dims(next_state, axis = 0)
+        next_state = np.expand_dims(next_frame, axis=2)
+        next_state = np.expand_dims(next_state, axis=0)
 
         print next_state.shape
         # append the next state to the last 3 frames in currstate to form the new state
-        next_state = np.append(curr_state[:, :, :, 1:], next_state, axis = 3)
+        next_state = np.append(curr_state[:, :, :, 1:], next_state, axis=3)
 
         self.memory.append(next_frame, action, self.preprocessor.process_reward(reward), is_terminal)
 
@@ -365,6 +365,8 @@ class DQNAgent:
             curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
                                       [env.step(0)[0] for _ in xrange(4)]), axis=2)
             curr_state = np.expand_dims(curr_state, axis=0)
+
+            action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
 
             is_terminal = False
 

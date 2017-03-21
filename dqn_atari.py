@@ -221,7 +221,6 @@ def main():  # noqa: D103
     # policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
     policy = GreedyEpsilonPolicy(args.epsilon)
 
-
     # os.mkdir('./atari-v0/' + args.network_name)
     # load json and create model
 
