@@ -157,7 +157,7 @@ class DQNAgent:
         state = np.expand_dims(state, axis = 0)
         q_values_val = self.calc_q_values(state)
 
-        return self.policy.select_action(q_values_val)
+        return self.policy.select_action(q_values_val, True)
 
     def update_policy(self):
         """Update your policy.
