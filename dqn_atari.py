@@ -232,7 +232,7 @@ def main():  # noqa: D103
     #     q_network_online.load_weights("./atari-v0/300000.h5")
     #     q_network_target.load_weights("./atari-v0/300000.h5")
     with tf.Session() as sess:
-        dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
+        dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions, args.gamma, \
                              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
                              args.experience_replay, args.repetition_times, args.network_name, sess)
 

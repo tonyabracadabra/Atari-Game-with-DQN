@@ -51,6 +51,7 @@ class DQNAgent:
                  preprocessor,
                  memory,
                  policy,
+                 num_actions,
                  gamma,
                  target_update_freq,
                  num_burn_in,
@@ -74,6 +75,7 @@ class DQNAgent:
         self.memory = memory
         self.gamma = gamma
         self.policy = policy
+        self.num_actions = num_actions
         self.train_freq = train_freq
         self.num_burn_in = num_burn_in
         self.batch_size = batch_size
@@ -100,19 +102,23 @@ class DQNAgent:
         keras.optimizers.Optimizer class. Specifically the Adam
         optimizer.
         """
+
         with tf.variable_scope('optimizer'):
-            # print self.q_values_online.shape
-            # Placeholder that we want to feed the updat in, just one value
-            self.y_true = tf.placeholder(tf.float32, [self.batch_size, ])
-            # Placeholder that specify which action
-            self.action = tf.placeholder(tf.int32, [self.batch_size, ])
-            # the output of the q_network is y_predadd
+                # print self.q_values_online.shape
+                # Placeholder that we want to feed the updat in, just one value
+                self.y_true = tf.placeholder(tf.float32, [None, ])
+                # Placeholder that specify which action
+                self.action = tf.placeholder(tf.int32, [None,])
+                # Transform it to one hot representation
+                self.action_one_hot = tf.cast(tf.one_hot(self.action, depth = self.num_actions, \
+                                              on_value=1, off_value=0), tf.float32)
 
-            self.y_pred = tf.stack([self.q_values_online[i, self.action[i]] for i in xrange(self.batch_size)])
+                # the output of the q_network is y_pred
+                self.y_pred = tf.reduce_sum(tf.multiply(self.q_values_online, self.action_one_hot), axis=1)
 
-            self.loss = loss_func(self.y_true, self.y_pred)
+                self.loss = loss_func(self.y_true, self.y_pred)
 
-            self.optimizer = optimizer.minimize(self.loss)
+                self.optimizer = optimizer.minimize(self.loss)
 
     def calc_q_values(self, state):
         """Given a state (or batch of states) calculate the Q-values.
@@ -173,20 +179,18 @@ class DQNAgent:
             states, next_states, actions, rewards, not_terminal = self.memory.sample(self.batch_size)
         else:
             states = np.stack(self.update_pool['states'])
-            print states.shape
             next_states = np.stack(self.update_pool['next_states'])
-            print next_states.shape
             actions = np.stack(self.update_pool['actions'])
-            print actions.shape
             rewards = np.stack(self.update_pool['rewards'])
-            print rewards.shape
             not_terminal = self.update_pool['not_terminal']
-            print len(not_terminal)
+            self.update_pool = {'actions':[], 'rewards':[], 'states':[], 'next_states':[], 'not_terminal':[]}
 
         y_vals = self._calc_y(next_states, rewards, not_terminal)
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                         feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
+
+
 
         return loss_val
 
@@ -248,14 +252,14 @@ class DQNAgent:
             print "Start " + str(episode_count) + "th Episode ..."
             action_count = 0
             for j in xrange(max_episode_length):
-                if iter_t % save_freq == 0:
-                    self.evaluate_no_render()
-                    model_json = self.q_network_online.to_json()
-                    with open(output_folder + str(iter_t) + ".json", "w") as json_file:
-                        json_file.write(model_json)
-                        # serialize weights to HDF5
-                        self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
-                    print("Saved model to disk")
+                # if iter_t % save_freq == 0:
+                #     self.evaluate_no_render()
+                #     model_json = self.q_network_online.to_json()
+                #     with open(output_folder + str(iter_t) + ".json", "w") as json_file:
+                #         json_file.write(model_json)
+                #         # serialize weights to HDF5
+                #         self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
+                #     print("Saved model to disk")
 
                 iter_t += 1
                 if action_count == self.repetition_times:
@@ -313,6 +317,7 @@ class DQNAgent:
 
         # Remove flickering effect
         # next_frame = np.maximum(curr_state[:, :, -1], next_frame)
+
         next_state = np.expand_dims(next_frame, axis = 2)
         # append the next state to the last 3 frames in currstate to form the new state
         next_state = np.append(curr_state[:, :, 1:], next_state, axis = 2)
