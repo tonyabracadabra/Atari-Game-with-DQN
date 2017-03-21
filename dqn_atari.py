@@ -60,6 +60,7 @@ def create_model(window, input_shape, num_actions,
 
     model = None
     if model_name is "q_network_deep":
+        print "Building " + model_name + " ..."
 
         # First convolutional layer
         x = Conv2D(filters=16, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
@@ -77,6 +78,7 @@ def create_model(window, input_shape, num_actions,
         model = Model(input=state, output=y_pred)
 
     elif model_name is "q_network_double":
+        print "Building " + model_name + " ..."
 
         # First convolutional layer
         x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
@@ -97,7 +99,8 @@ def create_model(window, input_shape, num_actions,
         model = Model(input=state, output=y_pred)
 
     elif model_name is "q_network_duel":
-
+        print "Building " + model_name + " ..."
+        
         # First convolutional layer
         x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
         x = Activation('relu')(x)
@@ -177,7 +180,7 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--network_name', default='q_network_deep', help='Type of model to use')
+    parser.add_argument('--network_name', default='q_network_double', help='Type of model to use')
     parser.add_argument('--window', default=4, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), help='new size')
     parser.add_argument('--batch_size', default=32, help='Batch size')
