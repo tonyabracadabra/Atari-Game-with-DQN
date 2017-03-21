@@ -177,7 +177,7 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--network', default='q_network_deep', help='Type of model to use')
+    parser.add_argument('--network_name', default='q_network_deep', help='Type of model to use')
     parser.add_argument('--window', default=4, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), help='new size')
     parser.add_argument('--batch_size', default=32, help='Batch size')
@@ -195,6 +195,7 @@ def main():  # noqa: D103
     parser.add_argument('-o', '--output', default='atari-v0-duel', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--save_freq', default=100000, type=int, help='model save frequency')
+
     args = parser.parse_args()
     print("\nParameters:")
     for arg in vars(args):
@@ -214,8 +215,8 @@ def main():  # noqa: D103
     num_actions = env.action_space.n
 
     preprocessor = AtariPreprocessor(args.new_size)
-    q_network_online = create_model(args.window, args.new_size, num_actions, 'q_network_duel')
-    q_network_target = create_model(args.window, args.new_size, num_actions, 'q_network_duel')
+    q_network_online = create_model(args.window, args.new_size, num_actions, args.network_name)
+    q_network_target = create_model(args.window, args.new_size, num_actions, args.network_name)
 
     memory = ReplayMemory(args.replay_buffer_size, args.window)
     # policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
@@ -239,7 +240,7 @@ def main():  # noqa: D103
                              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
                              args.experience_replay, args.repetition_times, args.network_name, sess)
 
-        optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
+        optimizer = tf.train.AdamOptimizer(learning_rate = args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)
         dqn_agent.fit(env, args.num_iterations, args.output + args.network_name + '/', args.save_freq,
                       args.max_episode_length)

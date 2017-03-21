@@ -118,7 +118,8 @@ class AtariPreprocessor(Preprocessor):
 
     def process_reward(self, reward):
         """Clip reward between -1 and 1."""
-        pass
+        return reward
+        # return 1.0 if reward > 0 else -1.0
 
 
 class PreprocessorSequence(Preprocessor):
