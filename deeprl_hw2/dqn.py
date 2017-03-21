@@ -190,8 +190,6 @@ class DQNAgent:
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                         feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
 
-
-
         return loss_val
 
     def fit(self, env, num_iterations, output_folder, save_freq=10000, max_episode_length=100, train_freq=50):
@@ -233,12 +231,14 @@ class DQNAgent:
         init_state = np.stack(map(self.preprocessor.process_state_for_network, \
                                   [env.step(0)[0] for i in xrange(4)]), axis = 2)
         curr_state = init_state
-        print "Start filling up the replay memory before update ..."
-        for j in xrange(self.num_burn_in):
-            action = self.select_action(curr_state)
-            next_state, reward, is_terminal = self._append_to_memory(curr_state, action, env)
-            curr_state = next_state
-        print "Has Prefilled the replay memory"
+        
+        if experience_replay:
+            print "Start filling up the replay memory before update ..."
+            for j in xrange(self.num_burn_in):
+                action = self.select_action(curr_state)
+                next_state, reward, is_terminal = self._append_to_memory(curr_state, action, env)
+                curr_state = next_state
+            print "Has Prefilled the replay memory"
 
         while iter_t < num_iterations:
             env.reset()
