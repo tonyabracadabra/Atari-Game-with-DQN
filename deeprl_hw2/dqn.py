@@ -183,11 +183,14 @@ class DQNAgent:
             actions = np.stack(self.update_pool['actions'])
             rewards = np.stack(self.update_pool['rewards'])
             not_terminal = self.update_pool['not_terminal']
+            self.update_pool = {'actions':[], 'rewards':[], 'states':[], 'next_states':[], 'not_terminal':[]}
 
         y_vals = self._calc_y(next_states, rewards, not_terminal)
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                         feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
+
+
 
         return loss_val
 
