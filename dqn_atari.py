@@ -24,8 +24,7 @@ import gym
 import keras.backend as K
 
 
-def create_model(window, input_shape, num_actions,
-                 model_name='q_network_deep'):  # noqa: D103
+def create_model(window, input_shape, num_actions, model_name='q_network_deep'):  # noqa: D103
     """Create the Deep-Q-network model.
 
     Use Keras to construct a keras.models.Model instance (you can also
@@ -55,11 +54,10 @@ def create_model(window, input_shape, num_actions,
     """
 
     input_shape = (input_shape[0], input_shape[1], window)
-
     state = Input(shape=input_shape)
-
     model = None
-    if model_name is "q_network_deep":
+
+    if model_name == "q_network_deep":
 
         # First convolutional layer
         x = Conv2D(filters=16, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
@@ -76,8 +74,8 @@ def create_model(window, input_shape, num_actions,
 
         model = Model(input=state, output=y_pred)
 
-    elif model_name is "q_network_double":
-
+    elif model_name == "q_network_double":
+        print 'create double dqn'
         # First convolutional layer
         x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
         x = Activation('relu')(x)
@@ -96,7 +94,7 @@ def create_model(window, input_shape, num_actions,
 
         model = Model(input=state, output=y_pred)
 
-    elif model_name is "q_network_duel":
+    elif model_name == "q_network_duel":
 
         # First convolutional layer
         x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
@@ -125,7 +123,7 @@ def create_model(window, input_shape, num_actions,
 
         model = Model(input=state, output=y_q)
 
-    elif model_name is "q_network_linear":
+    elif model_name == "q_network_linear":
 
         x = Flatten()(state)
         x = Dense(256)(x)
@@ -177,7 +175,7 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--network_name', default='q_network_deep', help='Type of model to use')
+    parser.add_argument('--network_name', default='q_network_double', help='Type of model to use')
     parser.add_argument('--window', default=4, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), help='new size')
     parser.add_argument('--batch_size', default=32, help='Batch size')
@@ -233,7 +231,6 @@ def main():  # noqa: D103
     #     # load weights into new model
     #     q_network_online.load_weights("./atari-v0/300000.h5")
     #     q_network_target.load_weights("./atari-v0/300000.h5")
-
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
                              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
