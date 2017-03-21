@@ -237,7 +237,7 @@ def main():  # noqa: D103
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
                              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
-                             args.experience_replay, args.repetition_times, sess, args.network_name)
+                             args.experience_replay, args.repetition_times, args.network_name, sess)
 
         optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)

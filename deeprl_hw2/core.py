@@ -234,23 +234,23 @@ class ReplayMemory:
     def _end_episode(self, final_index):
         self._terminal.add(final_index)
 
+    def is_valid_index(self, x):
+        return (x not in self._terminal) and \
+               (x + 1 % self.max_size not in self._terminal) and \
+               (x + 2 % self.max_size not in self._terminal) and \
+               (x + 3 % self.max_size not in self._terminal)
+
     def sample(self, batch_size, indexes=None):
         random_indexes = []
         while len(random_indexes) < batch_size:
-            new_random_indexes = random.sample(xrange(len(self._samples)), batch_size - len(random_indexes))
-            if_valid = lambda x: (x + 4 < self.index or x > self.index) and \
-                                 (x not in self._terminal) and \
-                                 (x + 1 % self.max_size not in self._terminal) and \
-                                 (x + 2 % self.max_size not in self._terminal) and \
-                                 (x + 3 % self.max_size not in self._terminal)
-
-            new_random_indexes = filter(if_valid, new_random_indexes)
+            new_random_indexes = random.sample(xrange(len(self._samples) - 5), batch_size - len(random_indexes))
+            new_random_indexes = filter(self.is_valid_index, new_random_indexes)
             random_indexes.extend(new_random_indexes)
 
         random_samples = []
         not_terminal = []
         for i in random_indexes:
-            random_samples.append(self._samples[i : i + 5])
+            random_samples.append(self._samples[i:i+5])
             not_terminal.append(False if i + 4 % self.max_size in self._terminal else True)
 
         # print [len([i.frame for i in samples]) for samples in random_samples]

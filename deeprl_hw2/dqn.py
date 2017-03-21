@@ -58,8 +58,8 @@ class DQNAgent:
                  batch_size,
                  experience_replay,
                  repetition_times,
-                 sess,
-                 network_name):
+                 args.network_name,
+                 sess):
 
         self.q_network_online, self.q_network_target = q_networks
 
@@ -80,8 +80,8 @@ class DQNAgent:
         self.target_update_freq = target_update_freq
         self.experience_replay = experience_replay
         self.repetition_times = repetition_times
-        self.sess = sess
         self.network_name = network_name
+        self.sess = sess
 
     def compile(self, optimizer, loss_func):
         """Setup all of the TF graph variables/ops.
@@ -168,10 +168,8 @@ class DQNAgent:
         """
 
         states, next_states, actions, rewards, not_terminal = self.memory.sample(self.batch_size)
-        if self.network_name is "q_network_double":
-            y_vals = self._calc_y_double(next_states, rewards, not_terminal)
-        else:
-            y_vals = self._calc_y(next_states, rewards, not_terminal)
+
+        y_vals = self._calc_y(next_states, rewards, not_terminal)
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                                     feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
@@ -273,23 +271,20 @@ class DQNAgent:
 
     def _calc_y(self, next_states, rewards, not_terminal):
         y_vals = rewards
-        added_vals = self.gamma * np.max(self.sess.run(self.q_values_target, \
-                                                       feed_dict={self.state_target: next_states}), axis=1)
 
-        y_vals[not_terminal] += added_vals[not_terminal]
-
-        return y_vals
-
-    def _calc_y_double(self, next_states, rewards, not_terminal):
-        y_vals = rewards
-
-        actions = np.argmax(self.sess.run(self.q_values_online, \
+        # Calculating y values for q_network double
+        if self.network_name is "q_network_double":
+            actions = np.argmax(self.sess.run(self.q_values_online, \
                       feed_dict={self.state_online: next_states}), axis = 1)
 
-        q_vals = self.gamma * self.sess.run(self.q_values_target, \
-                      feed_dict={self.state_target: next_states})
+            q_vals = self.gamma * self.sess.run(self.q_values_target, \
+                          feed_dict={self.state_target: next_states})
 
-        added_vals = q_vals[np.arange(self.batch_size), actions]
+            added_vals = q_vals[np.arange(self.batch_size), actions]
+        else:
+        # Calculating y values for q_network_deep and q_network_duel
+            added_vals = self.gamma * np.max(self.sess.run(self.q_values_target, \
+                           feed_dict={self.state_target: next_states}), axis=1)
 
         y_vals[not_terminal] += added_vals[not_terminal]
 
