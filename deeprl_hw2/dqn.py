@@ -102,43 +102,23 @@ class DQNAgent:
         keras.optimizers.Optimizer class. Specifically the Adam
         optimizer.
         """
+
         with tf.variable_scope('optimizer'):
-            # print self.q_values_online.shape
-            # Placeholder that we want to feed the updat in, just one value
-            self.y_true = tf.placeholder(tf.float32, [self.batch_size, ])
-            # Placeholder that specify which action
-            self.action = tf.placeholder(tf.int32, [self.batch_size, ])
-            # the output of the q_network is y_predadd
+                # print self.q_values_online.shape
+                # Placeholder that we want to feed the updat in, just one value
+                self.y_true = tf.placeholder(tf.float32, [None, ])
+                # Placeholder that specify which action
+                self.action = tf.placeholder(tf.int32, [None,])
+                # Transform it to one hot representation
+                self.action_one_hot = tf.cast(tf.one_hot(self.action, depth = self.num_actions, \
+                                              on_value=1, off_value=0), tf.float32)
 
-            # 32 * 6 * 6
-            self.y_pred = tf.stack([self.q_values_online[i, self.action[i]] for i in xrange(self.batch_size)])
+                # the output of the q_network is y_pred
+                self.y_pred = tf.reduce_sum(tf.multiply(self.q_values_online, self.action_one_hot), axis=1)
 
-            print self.y_pred
-            print self.y_true
+                self.loss = loss_func(self.y_true, self.y_pred)
 
-            self.loss = loss_func(self.y_true, self.y_pred)
-
-            self.optimizer = optimizer.minimize(self.loss)
-
-        # with tf.variable_scope('optimizer'):
-        #         # print self.q_values_online.shape
-        #         # Placeholder that we want to feed the updat in, just one value
-        #         self.y_true = tf.placeholder(tf.float32, [None, ])
-        #         # Placeholder that specify which action
-        #         self.action = tf.placeholder(tf.int32, [None,])
-        #         # Transform it to one hot representation
-        #         self.action_one_hot = tf.cast(tf.one_hot(self.action, depth = self.num_actions, \
-        #                                       on_value=1, off_value=0), tf.float32)
-
-        #         # the output of the q_network is y_pred
-        #         self.y_pred = tf.reduce_sum(tf.multiply(self.q_values_online, self.action_one_hot), axis=1)
-
-        #         print self.y_pred
-        #         print self.y_true
-
-        #         self.loss = loss_func(self.y_true, self.y_pred)
-
-        #         self.optimizer = optimizer.minimize(self.loss)
+                self.optimizer = optimizer.minimize(self.loss)
 
     def calc_q_values(self, state):
         """Given a state (or batch of states) calculate the Q-values.
@@ -199,15 +179,10 @@ class DQNAgent:
             states, next_states, actions, rewards, not_terminal = self.memory.sample(self.batch_size)
         else:
             states = np.stack(self.update_pool['states'])
-            print states.shape
             next_states = np.stack(self.update_pool['next_states'])
-            print next_states.shape
             actions = np.stack(self.update_pool['actions'])
-            print actions.shape
             rewards = np.stack(self.update_pool['rewards'])
-            print rewards.shape
             not_terminal = self.update_pool['not_terminal']
-            print len(not_terminal)
 
         y_vals = self._calc_y(next_states, rewards, not_terminal)
 
