@@ -387,6 +387,3 @@ class DQNAgent:
                 i += 1
 
             num_episodes -= 1
-
-    def print_info(self):
-        print
