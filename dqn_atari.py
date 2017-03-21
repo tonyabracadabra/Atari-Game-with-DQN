@@ -24,8 +24,7 @@ import gym
 import keras.backend as K
 
 
-def create_model(window, input_shape, num_actions,
-                 model_name='q_network_deep'):  # noqa: D103
+def create_model(window, input_shape, num_actions, model_name='q_network_deep'):  # noqa: D103
     """Create the Deep-Q-network model.
 
     Use Keras to construct a keras.models.Model instance (you can also
@@ -55,10 +54,9 @@ def create_model(window, input_shape, num_actions,
     """
 
     input_shape = (input_shape[0], input_shape[1], window)
-
     state = Input(shape=input_shape)
-
     model = None
+
     if model_name is "q_network_deep":
         print "Building " + model_name + " ..."
 
@@ -80,7 +78,7 @@ def create_model(window, input_shape, num_actions,
     elif model_name is "q_network_double":
         print "Building " + model_name + " ..."
 
-        # First convolutional layer
+       # First convolutional layer
         x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
         x = Activation('relu')(x)
         # Second convolutional layer
@@ -101,7 +99,7 @@ def create_model(window, input_shape, num_actions,
     elif model_name is "q_network_duel":
         print "Building " + model_name + " ..."
         
-        # First convolutional layer
+       # First convolutional layer
         x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
         x = Activation('relu')(x)
         # Second convolutional layer
@@ -128,7 +126,7 @@ def create_model(window, input_shape, num_actions,
 
         model = Model(input=state, output=y_q)
 
-    elif model_name is "q_network_linear":
+    elif model_name == "q_network_linear":
 
         x = Flatten()(state)
         x = Dense(256)(x)
@@ -225,7 +223,7 @@ def main():  # noqa: D103
     # policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
     policy = GreedyEpsilonPolicy(args.epsilon)
 
-    # os.mkdir(args.output + "/" + args.network_name)
+    os.mkdir(args.output + "/" + args.network_name)
     # load json and create model
 
     # # load json and create model
@@ -236,7 +234,6 @@ def main():  # noqa: D103
     #     # load weights into new model
     #     q_network_online.load_weights("./atari-v0/300000.h5")
     #     q_network_target.load_weights("./atari-v0/300000.h5")
-
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions, args.gamma, \
                              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
