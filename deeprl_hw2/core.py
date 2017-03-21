@@ -3,6 +3,7 @@
 import random
 import numpy as np
 
+
 class Sample:
     """Represents a reinforcement learning sample.
 
@@ -237,11 +238,11 @@ class ReplayMemory:
         random_indexes = []
         while len(random_indexes) < batch_size:
             new_random_indexes = random.sample(xrange(len(self._samples)), batch_size - len(random_indexes))
-            if_valid = lambda x : (x + 4 < self.index or x > self.index) and \
-                                  (x not in self._terminal) and \
-                                  (x + 1 % self.max_size not in self._terminal) and \
-                                  (x + 2 % self.max_size not in self._terminal) and \
-                                  (x + 3 % self.max_size not in self._terminal)
+            if_valid = lambda x: (x + 4 < self.index or x > self.index) and \
+                                 (x not in self._terminal) and \
+                                 (x + 1 % self.max_size not in self._terminal) and \
+                                 (x + 2 % self.max_size not in self._terminal) and \
+                                 (x + 3 % self.max_size not in self._terminal)
 
             new_random_indexes = filter(if_valid, new_random_indexes)
             random_indexes.extend(new_random_indexes)
