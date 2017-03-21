@@ -248,14 +248,14 @@ class DQNAgent:
             print "Start " + str(episode_count) + "th Episode ..."
             action_count = 0
             for j in xrange(max_episode_length):
-                # if iter_t % save_freq == 0:
-                #     self.evaluate_no_render()
-                #     model_json = self.q_network_online.to_json()
-                #     with open(output_folder + '/' + str(iter_t) + ".json", "w") as json_file:
-                #         json_file.write(model_json)
-                #     # serialize weights to HDF5
-                #         self.q_network_online.save_weights(output_folder + '/' + str(iter_t) + ".h5")
-                #     print("Saved model to disk")
+                if iter_t % save_freq == 0:
+                    self.evaluate_no_render()
+                    model_json = self.q_network_online.to_json()
+                    with open(output_folder + str(iter_t) + ".json", "w") as json_file:
+                        json_file.write(model_json)
+                        # serialize weights to HDF5
+                        self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
+                    print("Saved model to disk")
 
                 iter_t += 1
                 if action_count == self.repetition_times:
@@ -290,16 +290,16 @@ class DQNAgent:
         # Calculating y values for q_network double
         if self.network_name is "q_network_double":
             actions = np.argmax(self.sess.run(self.q_values_online, \
-                      feed_dict={self.state_online: next_states}), axis = 1)
+                                              feed_dict={self.state_online: next_states}), axis=1)
 
             q_vals = self.gamma * self.sess.run(self.q_values_target, \
-                          feed_dict={self.state_target: next_states})
+                                                feed_dict={self.state_target: next_states})
 
             added_vals = q_vals[np.arange(self.batch_size), actions]
         else:
-        # Calculating y values for q_network_deep and q_network_duel
+            # Calculating y values for q_network_deep and q_network_duel
             added_vals = self.gamma * np.max(self.sess.run(self.q_values_target, \
-                           feed_dict={self.state_target: next_states}), axis=1)
+                                                           feed_dict={self.state_target: next_states}), axis=1)
 
         y_vals[not_terminal] += added_vals[not_terminal]
 
@@ -310,6 +310,7 @@ class DQNAgent:
         next_frame, reward, is_terminal, _ = env.step(action)
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
         next_frame = self.preprocessor.process_state_for_memory(next_frame)
+        
         # Remove flickering effect
         next_frame = np.maximum(curr_state[:, :, -1], next_frame)
         next_state = np.expand_dims(next_frame, axis = 2)
@@ -386,6 +387,8 @@ class DQNAgent:
                                       [env.step(0)[0] for _ in xrange(4)]), axis=2)
             curr_state = np.expand_dims(curr_state, axis=0)
 
+            action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
+
             is_terminal = False
 
             i = 0
@@ -407,6 +410,3 @@ class DQNAgent:
                 i += 1
 
             num_episodes -= 1
-
-    def print_info(self):
-        print

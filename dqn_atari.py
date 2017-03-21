@@ -6,7 +6,7 @@ import random
 
 import numpy as np
 import tensorflow as tf
-from keras.layers import (Activation, Conv2D, Dense, Flatten, Input, Permute, RepeatVector, Reshape, Lambda)
+from keras.layers import (Activation, Conv2D, Dense, Flatten, Input, Lambda)
 from keras.models import model_from_json
 from keras.layers.merge import Add, Average
 
@@ -192,7 +192,7 @@ def main():  # noqa: D103
     parser.add_argument('--train_freq', default=32, help='Frequency for training')
     parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
     parser.add_argument('--repetition_times', default=4, help='Parameter for action repetition')
-    parser.add_argument('-o', '--output', default='atari-v0-duel', help='Directory to save data to')
+    parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--save_freq', default=100000, type=int, help='model save frequency')
 
@@ -222,8 +222,7 @@ def main():  # noqa: D103
     # policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
     policy = GreedyEpsilonPolicy(args.epsilon)
 
-
-    # os.mkdir('./atari-v0/' + args.network_name)
+    os.mkdir(args.output + "/" + args.network_name)
     # load json and create model
 
     # # load json and create model
@@ -242,7 +241,7 @@ def main():  # noqa: D103
 
         optimizer = tf.train.AdamOptimizer(learning_rate = args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)
-        dqn_agent.fit(env, args.num_iterations, args.output + args.network_name + '/', args.save_freq,
+        dqn_agent.fit(env, args.num_iterations, args.output + '/' + args.network_name + '/', args.save_freq,
                       args.max_episode_length)
 
 

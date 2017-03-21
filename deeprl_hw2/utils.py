@@ -65,8 +65,8 @@ def get_soft_target_model_updates(target, source, tau):
       List of tensor update ops.
     """
 
-    weights = map(lambda (x,y):x+y, zip(map(lambda w : (1 - tau) * w, target.get_weights()), \
-                                       map(lambda w : tau * w, source.get_weights())))
+    weights = map(lambda (x, y): x + y, zip(map(lambda w: (1 - tau) * w, target.get_weights()), \
+                                            map(lambda w: tau * w, source.get_weights())))
 
     return [pair[0].assign(pair[1]) for pair in zip(target.weights, weights)]
 
@@ -91,4 +91,3 @@ def get_hard_target_model_updates(target, source):
     """
 
     return [pair[0].assign(pair[1]) for pair in zip(target.weights, source.get_weights())]
-
