@@ -6,7 +6,7 @@ import random
 
 import numpy as np
 import tensorflow as tf
-from keras.layers import (Activation, Conv2D, Dense, Flatten, Input, Permute, RepeatVector, Reshape, Lambda)
+from keras.layers import (Activation, Conv2D, Dense, Flatten, Input, Lambda)
 from keras.models import model_from_json
 from keras.layers.merge import Add, Average
 
