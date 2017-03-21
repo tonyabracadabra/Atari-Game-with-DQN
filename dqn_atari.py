@@ -57,7 +57,7 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
     state = Input(shape=input_shape)
     model = None
 
-    if model_name is "q_network_deep":
+    if model_name == "q_network_deep":
         print "Building " + model_name + " ..."
 
         # First convolutional layer
@@ -75,7 +75,7 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
 
         model = Model(input=state, output=y_pred)
 
-    elif model_name is "q_network_double":
+    elif model_name == "q_network_double":
         print "Building " + model_name + " ..."
 
        # First convolutional layer
@@ -96,7 +96,7 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
 
         model = Model(input=state, output=y_pred)
 
-    elif model_name is "q_network_duel":
+    elif model_name == "q_network_duel":
         print "Building " + model_name + " ..."
         
        # First convolutional layer
