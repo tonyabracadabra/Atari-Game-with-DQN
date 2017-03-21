@@ -109,13 +109,10 @@ def create_model(window, input_shape, num_actions,
         x = Activation('relu')(x)
 
         x = Flatten()(x)
-
         # value output
-        x_val = Dense(512)(x)
-        x_val = Activation('relu')(x_val)
-        y_val = Dense(1)(x_val)
-        y_val = RepeatVector(num_actions)(y_val)
-        y_val = Reshape((num_actions,))(y_val)
+        x = Dense(512)(x)
+        x = Activation('relu')(x)
+        y_val = Dense(1)(x)
 
         # advantage output
         x_advantage = Dense(512)(x)
@@ -123,10 +120,8 @@ def create_model(window, input_shape, num_actions,
         y_advantage = Dense(num_actions)(x_advantage)
         # mean advantage
         y_advantage_mean = Lambda(lambda x: K.mean(x, axis=1, keepdims=True))(y_advantage)
-        y_advantage_mean = RepeatVector(num_actions)(y_advantage_mean)
-        y_advantage_mean = Reshape((num_actions,))(y_advantage_mean)
 
-        y_q = Add()([y_val, y_advantage, y_advantage_mean])
+        y_q = Lambda(lambda x: x[0] + x[1] + x[2])([y_val, y_advantage, y_advantage_mean])
 
         model = Model(input=state, output=y_q)
 
@@ -197,7 +192,7 @@ def main():  # noqa: D103
     parser.add_argument('--train_freq', default=32, help='Frequency for training')
     parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
     parser.add_argument('--repetition_times', default=4, help='Parameter for action repetition')
-    parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
+    parser.add_argument('-o', '--output', default='atari-v0-duel', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--save_freq', default=100000, type=int, help='model save frequency')
     args = parser.parse_args()

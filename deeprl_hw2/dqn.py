@@ -62,6 +62,7 @@ class DQNAgent:
                  network_name):
 
         self.q_network_online, self.q_network_target = q_networks
+
         self.q_values_online = self.q_network_online.output
         self.q_values_target = self.q_network_target.output
 
@@ -234,14 +235,14 @@ class DQNAgent:
             print "Start " + str(episode_count) + "th Episode ..."
             action_count = 0
             for j in xrange(max_episode_length):
-                # if iter_t % save_freq == 0:
-                #     self.evaluate_no_render()
-                #     model_json = self.q_network_online.to_json()
-                #     with open(output_folder + '/' + str(iter_t) + ".json", "w") as json_file:
-                #         json_file.write(model_json)
-                #     # serialize weights to HDF5
-                #         self.q_network_online.save_weights(output_folder + '/' + str(iter_t) + ".h5")
-                #     print("Saved model to disk")
+                if iter_t % save_freq == 0:
+                    self.evaluate_no_render()
+                    model_json = self.q_network_online.to_json()
+                    with open(output_folder + '/' + str(iter_t) + ".json", "w") as json_file:
+                        json_file.write(model_json)
+                    # serialize weights to HDF5
+                        self.q_network_online.save_weights(output_folder + '/' + str(iter_t) + ".h5")
+                    print("Saved model to disk")
 
                 iter_t += 1
                 if action_count == self.repetition_times:
@@ -302,10 +303,12 @@ class DQNAgent:
 
         next_state = np.expand_dims(next_frame, axis = 2)
         next_state = np.expand_dims(next_state, axis = 0)
+
+        print next_state.shape
         # append the next state to the last 3 frames in currstate to form the new state
         next_state = np.append(curr_state[:, :, :, 1:], next_state, axis = 3)
 
-        self.memory.append(next_frame, action, reward, is_terminal)
+        self.memory.append(next_frame, action, self.preprocessor.process_reward(reward), is_terminal)
 
         return next_state, reward, is_terminal
 
@@ -359,7 +362,6 @@ class DQNAgent:
         """
 
         # Parameter for action repetition
-        k = 4
         while num_episodes > 0:
             env = gym.make('SpaceInvaders-v0')
             env.reset()
