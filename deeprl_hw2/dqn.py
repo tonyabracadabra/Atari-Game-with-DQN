@@ -61,6 +61,7 @@ class DQNAgent:
                  sess):
 
         self.q_network_online, self.q_network_target = q_networks
+
         self.q_values_online = self.q_network_online.output
         self.q_values_target = self.q_network_target.output
 
@@ -298,10 +299,12 @@ class DQNAgent:
 
         next_state = np.expand_dims(next_frame, axis = 2)
         next_state = np.expand_dims(next_state, axis = 0)
+
+        print next_state.shape
         # append the next state to the last 3 frames in currstate to form the new state
         next_state = np.append(curr_state[:, :, :, 1:], next_state, axis = 3)
 
-        self.memory.append(next_frame, action, reward, is_terminal)
+        self.memory.append(next_frame, action, self.preprocessor.process_reward(reward), is_terminal)
 
         return next_state, reward, is_terminal
 
@@ -388,4 +391,4 @@ class DQNAgent:
             num_episodes -= 1
 
     def print_info(self):
-        print 
+        print

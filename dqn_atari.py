@@ -196,7 +196,7 @@ def main():  # noqa: D103
     parser.add_argument('--train_freq', default=32, help='Frequency for training')
     parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
     parser.add_argument('--repetition_times', default=4, help='Parameter for action repetition')
-    parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
+    parser.add_argument('-o', '--output', default='atari-v0-duel', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--save_freq', default=100000, type=int, help='model save frequency')
     args = parser.parse_args()
@@ -222,7 +222,7 @@ def main():  # noqa: D103
     policy = GreedyEpsilonPolicy(args.epsilon)
 
     network_name = "q_network_duel"
-    # os.mkdir('./atari-v0/' + network_name)
+    os.mkdir('./atari-v0/' + network_name)
     # load json and create model
 
     # # load json and create model
