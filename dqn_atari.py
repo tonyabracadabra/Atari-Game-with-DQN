@@ -189,12 +189,13 @@ def main():  # noqa: D103
     parser.add_argument('--gamma', default=0.99, help='Discount factor')
     parser.add_argument('--alpha', default=0.0001, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--target_update_freq', default=10000, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_burn_in', default=100, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--num_iterations', default=5000000, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--max_episode_length', default=1000, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--train_freq', default=32, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--target_update_freq', default=10000, help='Frequency for copying weights to target network')
+    parser.add_argument('--num_burn_in', default=100, help='Number of prefilled samples in the replay buffer')
+    parser.add_argument('--num_iterations', default=5000000, help='Number of overal interactions to the environment')
+    parser.add_argument('--max_episode_length', default=1000, help='Terminate earlier for one episode')
+    parser.add_argument('--train_freq', default=32, help='Frequency for training')
     parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
+    parser.add_argument('--repetition_times', default=4, help='Parameter for action repetition')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--save_freq', default=100000, type=int, help='model save frequency')
@@ -236,7 +237,7 @@ def main():  # noqa: D103
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
                              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
-                             args.experience_replay, sess)
+                             args.experience_replay, args.repetition_times, sess)
 
         optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)

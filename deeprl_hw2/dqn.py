@@ -57,6 +57,7 @@ class DQNAgent:
                  train_freq,
                  batch_size,
                  experience_replay,
+                 repetition_times,
                  sess):
 
         self.q_network_online, self.q_network_target = q_networks
@@ -76,6 +77,7 @@ class DQNAgent:
         self.batch_size = batch_size
         self.target_update_freq = target_update_freq
         self.experience_replay = experience_replay
+        self.repetition_times = repetition_times
         self.sess = sess
 
     def compile(self, optimizer, loss_func):
@@ -164,7 +166,7 @@ class DQNAgent:
 
         states, next_states, actions, rewards, not_terminal = self.memory.sample(self.batch_size)
 
-        y_vals = self._calc_y_double(next_states, rewards, not_terminal)
+        y_vals = self._calc_y(next_states, rewards, not_terminal)
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
                                     feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
@@ -211,14 +213,10 @@ class DQNAgent:
         curr_state = init_state
         print "Start filling up the replay memory before update ..."
         for j in xrange(self.num_burn_in):
-            next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
+            action = self.select_action(curr_state)
+            next_state, reward, is_terminal = self._append_to_memory(curr_state, action, env)
             curr_state = next_state
         print "Has Prefilled the replay memory"
-
-        samples = self.memory.sample(self.batch_size)
-
-        print samples[0][0].shape
-        print samples[0][1].shape
 
         while iter_t < num_iterations:
             env.reset()
@@ -230,7 +228,7 @@ class DQNAgent:
             total_reward = 0
 
             print "Start " + str(episode_count) + "th Episode ..."
-            action_count = 1
+            action_count = 0
             for j in xrange(max_episode_length):
                 if iter_t % save_freq == 0:
                     self.evaluate_no_render()
@@ -242,10 +240,11 @@ class DQNAgent:
                     print("Saved model to disk")
 
                 iter_t += 1
-                if action_count % 5 == 0:
-                    action_count = 1
+                if action_count == self.repetition_times:
+                    action_count = 0
                     action = self.select_action(curr_state)
                 action_count += 1
+
                 next_state, reward, is_terminal = self._append_to_memory(curr_state, action, env)
                 total_reward += reward
 
@@ -292,7 +291,6 @@ class DQNAgent:
         return y_vals
 
     def _append_to_memory(self, curr_state, action, env):
-
         # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
         next_frame, reward, is_terminal, _ = env.step(action)
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
@@ -372,7 +370,7 @@ class DQNAgent:
             i = 0
             while not is_terminal:
                 env.render()
-                if i % k == 0:
+                if i % self.repetition_times == 0:
                     action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
 
                 next_state, reward, is_terminal, _ = env.step(action)
