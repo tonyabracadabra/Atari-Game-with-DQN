@@ -94,8 +94,8 @@ class AtariPreprocessor(Preprocessor):
         image conversions.
         """
         converted_img = Image.fromarray(state, 'RGB').resize((self.new_width, self.new_height)).convert('L')
-
-        return np.array(converted_img)
+        print converted_img
+        return np.array(converted_img, dtype=np.uint8)
 
     def process_state_for_network(self, state):
         """Scale, convert to greyscale and store as float32.

@@ -281,7 +281,8 @@ class DQNAgent:
 
                 if iter_t % self.train_freq == 0:
                     loss_val = self.update_policy()
-                    print str(iter_t) + "th iteration \n Loss val : " + str(loss_val)
+                    if iter_t % 5000 == 0:
+                        print str(iter_t) + "th iteration \n Loss val : " + str(loss_val)
 
                 curr_state = next_state
 
