@@ -222,7 +222,7 @@ def main():  # noqa: D103
     # policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000)
     policy = GreedyEpsilonPolicy(args.epsilon)
 
-    os.mkdir(args.output + "/" + args.network_name)
+    # os.mkdir(args.output + "/" + args.network_name)
     # load json and create model
 
     # # load json and create model
@@ -235,7 +235,7 @@ def main():  # noqa: D103
     #     q_network_target.load_weights("./atari-v0/300000.h5")
 
     with tf.Session() as sess:
-        dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, args.gamma, \
+        dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions, args.gamma, \
                              args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
                              args.experience_replay, args.repetition_times, args.network_name, sess)
 
