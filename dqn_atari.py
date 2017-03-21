@@ -221,7 +221,7 @@ def main():  # noqa: D103
     policy = GreedyEpsilonPolicy(args.epsilon)
 
     network_name = "q_network_deep"
-    os.mkdir('./atari-v0/' + network_name)
+    # os.mkdir('./atari-v0/' + network_name)
     # load json and create model
 
     # # load json and create model

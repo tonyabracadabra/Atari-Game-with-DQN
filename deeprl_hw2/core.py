@@ -250,8 +250,8 @@ class ReplayMemory:
         random_samples = []
         not_terminal = []
         for i in random_indexes:
-            random_samples.append(self._samples[i: i + 5])
-            not_terminal.append(False if i + 3 % self.max_size in self._terminal else True)
+            random_samples.append(self._samples[i : i + 5])
+            not_terminal.append(False if i + 4 % self.max_size in self._terminal else True)
 
         # print [len([i.frame for i in samples]) for samples in random_samples]
         states = np.stack([np.stack([s.frame for s in samples[:4]], axis=2) for samples in random_samples])
