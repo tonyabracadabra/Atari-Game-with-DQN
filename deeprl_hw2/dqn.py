@@ -231,14 +231,15 @@ class DQNAgent:
             print "Start " + str(episode_count) + "th Episode ..."
 
             for j in xrange(max_episode_length):
-                # if iter_t % save_freq == 0:
-                #     self.evaluate_no_render()
-                #     model_json = self.q_network_online.to_json()
-                #     with open(output_folder + '/' + str(iter_t) + ".json", "w") as json_file:
-                #         json_file.write(model_json)
-                #     # serialize weights to HDF5
-                #         self.q_network_online.save_weights(output_folder + '/' + str(iter_t) + ".h5")
-                #     print("Saved model to disk")
+                if iter_t % save_freq == 0:
+                    self.evaluate_no_render()
+                    model_json = self.q_network_online.to_json()
+                    with open(output_folder + '/' + str(iter_t) + ".json", "w") as json_file:
+                        json_file.write(model_json)
+                    # serialize weights to HDF5
+                        self.q_network_online.save_weights(output_folder + '/' + str(iter_t) + ".h5")
+                    print("Saved model to disk")
+
                 iter_t += 1
 
                 next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
@@ -275,13 +276,13 @@ class DQNAgent:
     def _calc_y_double(self, next_states, rewards, not_terminal):
         y_vals = rewards
 
-        a = np.argmax(self.sess.run(self.q_values_online, \
+        actions = np.argmax(self.sess.run(self.q_values_online, \
                       feed_dict={self.state_online: next_states}), axis = 1)
 
-        temp = self.gamma * self.sess.run(self.q_values_target, \
+        q_vals = self.gamma * self.sess.run(self.q_values_target, \
                       feed_dict={self.state_target: next_states})
-        
-        added_vals = temp[np.arange(self.batch_size), a]
+
+        added_vals = q_vals[np.arange(self.batch_size), actions]
 
         y_vals[not_terminal] += added_vals[not_terminal]
 
@@ -353,6 +354,8 @@ class DQNAgent:
         You can also call the render function here if you want to
         visually inspect your policy.
         """
+
+        # Parameter for action repetition
         k = 4
         while num_episodes > 0:
             env = gym.make('SpaceInvaders-v0')
@@ -370,6 +373,7 @@ class DQNAgent:
                 env.render()
                 if i % k == 0:
                     action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
+
                 next_state, reward, is_terminal, _ = env.step(action)
 
                 next_state = self.preprocessor.process_state_for_network(next_state)
