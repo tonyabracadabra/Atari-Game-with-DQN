@@ -205,9 +205,9 @@ class DQNAgent:
         episode_count = 0
 
         init_state = np.stack(map(self.preprocessor.process_state_for_network, \
-                                      [env.step(0)[0] for i in xrange(4)]), axis=2)
+                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
         init_state = np.expand_dims(init_state, axis=0)
-        
+
         curr_state = init_state
         print "Start filling up the replay memory before update ..."
         for j in xrange(self.num_burn_in):
@@ -224,12 +224,13 @@ class DQNAgent:
             env.reset()
             # Get the initial state
             curr_state = init_state
+            action = self.select_action(curr_state)
 
             episode_count += 1
             total_reward = 0
 
             print "Start " + str(episode_count) + "th Episode ..."
-
+            action_count = 1
             for j in xrange(max_episode_length):
                 # if iter_t % save_freq == 0:
                 #     self.evaluate_no_render()
@@ -240,8 +241,11 @@ class DQNAgent:
                 #         self.q_network_online.save_weights(output_folder + '/' + str(iter_t) + ".h5")
                 #     print("Saved model to disk")
                 iter_t += 1
-
-                next_state, reward, is_terminal = self._append_to_memory(curr_state, env)
+                if action_count % 5 == 0:
+                    action_count = 1
+                    action = self.select_action(curr_state)
+                action_count += 1
+                next_state, reward, is_terminal = self._append_to_memory(curr_state, action, env)
                 total_reward += reward
 
                 if is_terminal:
@@ -261,11 +265,10 @@ class DQNAgent:
             loss_val = self.update_policy()
             print str(episode_count) + "th Episode:\n" + "Reward: " + str(total_reward) + "\n Loss:" + str(loss_val)
 
-
     def _calc_y(self, next_states, rewards, not_terminal):
         y_vals = rewards
         added_vals = self.gamma * np.max(self.sess.run(self.q_values_target, \
-                                  feed_dict={self.state_target: next_states}), axis = 1)
+                                                       feed_dict={self.state_target: next_states}), axis=1)
 
         y_vals[not_terminal] += added_vals[not_terminal]
 
@@ -275,12 +278,13 @@ class DQNAgent:
         y_val = sample.reward
         if not sample.is_terminal:
             a = np.argmax(self.sess.run(self.q_values_online, feed_dict={self.state_online: sample.next_state}))
-            y_val += self.gamma * self.sess.run(self.q_values_target, feed_dict={self.state_target: sample.next_state})[:, a]
+            y_val += self.gamma * self.sess.run(self.q_values_target, feed_dict={self.state_target: sample.next_state})[
+                                  :, a]
 
         return y_val
 
-    def _append_to_memory(self, curr_state, env):
-        action = self.select_action(curr_state)
+    def _append_to_memory(self, curr_state, action, env):
+
         # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
         next_frame, reward, is_terminal, _ = env.step(action)
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
@@ -328,8 +332,6 @@ class DQNAgent:
         reward_avg /= 20
 
         print "Average reward: " + str(reward_avg)
-
-
 
     def evaluate(self, env, num_episodes, max_episode_length=None):
         """Test your agent with a provided environment.
