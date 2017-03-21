@@ -223,6 +223,8 @@ class ReplayMemory:
 
         if is_terminal:
             self._end_episode(self.index)
+        elif self.index in self._terminal:
+            self._terminal.remove(self.index)
 
         if len(self._samples) == self.max_size:
             self._samples[self.index] = sample
