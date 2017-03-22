@@ -96,7 +96,7 @@ class AtariPreprocessor(Preprocessor):
         converted_img = Image.fromarray(state, 'RGB').resize((self.new_width, 110)).convert('L')
         img_array = np.array(converted_img)
         # crop 84 * 84 region
-        img_array = img_array[13:self.new_height+13,:]
+        img_array = img_array[0:self.new_height,:]
         return img_array
 
     def process_state_for_network(self, state):

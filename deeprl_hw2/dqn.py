@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import gym
+from gym import wrappers
 
 from utils import *
 
@@ -60,6 +61,7 @@ class DQNAgent:
                  experience_replay,
                  repetition_times,
                  network_name,
+                 env_name,
                  sess):
 
         self.q_network_online, self.q_network_target = q_networks
@@ -83,6 +85,7 @@ class DQNAgent:
         self.experience_replay = experience_replay
         self.repetition_times = repetition_times
         self.network_name = network_name
+        self.env_name = env_name
         self.sess = sess
 
     def compile(self, optimizer, loss_func):
@@ -235,7 +238,7 @@ class DQNAgent:
         if self.experience_replay:
             print "Start filling up the replay memory before update ..."
             for j in xrange(self.num_burn_in):
-                action = np.random.randint(0, self.num_actions)
+                action = env.action_space.sample()
                 # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
                 next_frame, reward, is_terminal, debug_info = env.step(action)
                 life_terminal = False
@@ -251,8 +254,9 @@ class DQNAgent:
             print "Has Prefilled the replay memory"
 
         while iter_t < num_iterations:
-            env.reset()
             # Get the initial state
+            num_lives = 3
+            env.reset()
             curr_state = init_state
             action = 0
 
@@ -357,7 +361,7 @@ class DQNAgent:
 
     def evaluate_no_render(self):
         num_episodes = 0
-        env = gym.make('SpaceInvaders-v0')
+        env = gym.make(self.env_name)
 
         reward_avg = 0
         print "Start evaluating ... "
@@ -390,7 +394,7 @@ class DQNAgent:
 
         print "Average reward: " + str(reward_avg)
 
-    def evaluate(self, env, num_episodes, max_episode_length=None):
+    def evaluate(self, env, log_file, num_episodes, max_episode_length=None):
         """Test your agent with a provided environment.
         
         You shouldn't update your network parameters here. Also if you
@@ -405,9 +409,13 @@ class DQNAgent:
         """
 
         # Parameter for action repetition
+        init = tf.global_variables_initializer()
+        self.sess.run(init)
+
+        env = wrappers.Monitor(env, log_file)
+
         while num_episodes > 0:
-            env = gym.make('SpaceInvaders-v0')
-            env.reset()
+            next_frame = env.reset()
 
             # Get the initial state
             curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
@@ -420,13 +428,13 @@ class DQNAgent:
 
             i = 0
             while not is_terminal:
-                env.render()
+                # env.render()
                 if i % self.repetition_times == 0:
                     action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
 
-                next_state, reward, is_terminal, _ = env.step(action)
+                next_frame, reward, is_terminal, _ = env.step(action)
 
-                next_state = self.preprocessor.process_state_for_network(next_state)
+                next_state = self.preprocessor.process_state_for_network(next_frame)
                 next_state = np.expand_dims(next_state, axis=2)
                 next_state = np.expand_dims(next_state, axis=0)
                 # append the next state to the last 3 frames in currstate to form the new state
@@ -435,5 +443,5 @@ class DQNAgent:
                 curr_state = next_state
 
                 i += 1
-
+            print str(num_episodes) + "th Episode Finished"
             num_episodes -= 1
