@@ -342,7 +342,7 @@ class DQNAgent:
 
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
         next_frame = self.preprocessor.process_state_for_memory(next_frame)
-
+        
         # Remove flickering effect
         # next_frame = np.maximum(curr_state[:, :, -1], next_frame)
         next_state = np.expand_dims(next_frame, axis=2)

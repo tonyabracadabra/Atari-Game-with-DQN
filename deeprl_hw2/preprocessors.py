@@ -93,7 +93,8 @@ class AtariPreprocessor(Preprocessor):
         We recommend using the Python Image Library (PIL) to do the
         image conversions.
         """
-        converted_img = Image.fromarray(state, 'RGB').resize((self.new_width, self.new_height)).convert('L')
+        img = Image.fromarray(state, 'RGB')
+        converted_img = img.resize((self.new_width, self.new_height), Image.ANTIALIAS).convert('L')
         img_array = np.array(converted_img)
 
         return img_array
