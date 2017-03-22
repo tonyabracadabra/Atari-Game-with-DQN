@@ -247,7 +247,11 @@ class ReplayMemory:
 
         sample_size = batch_size
         while len(random_indexes) < batch_size:
-            left = 1.0 * (self.index - 5) / len(self._samples - 10)
+
+            left = 1.0
+            if self.index != len(self._samples):
+                left *= (self.index - 5) / (len(self._samples) - 10)
+
             left_size = int(sample_size * left)
             right_size = sample_size - left_size
 
