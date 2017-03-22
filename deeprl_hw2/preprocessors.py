@@ -93,10 +93,9 @@ class AtariPreprocessor(Preprocessor):
         We recommend using the Python Image Library (PIL) to do the
         image conversions.
         """
-        converted_img = Image.fromarray(state, 'RGB').resize((self.new_width, 110)).convert('L')
+        converted_img = Image.fromarray(state, 'RGB').resize((self.new_width, self.new_height)).convert('L')
         img_array = np.array(converted_img)
-        # crop 84 * 84 region
-        img_array = img_array[0:self.new_height,:]
+
         return img_array
 
     def process_state_for_network(self, state):

@@ -2,7 +2,8 @@ import tensorflow as tf
 import numpy as np
 import gym
 from gym import wrappers
-
+import matplotlib.pyplot as plt
+from pylab import *
 from utils import *
 
 """Main DQN agent."""
