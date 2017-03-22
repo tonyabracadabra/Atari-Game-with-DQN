@@ -316,7 +316,7 @@ class DQNAgent:
     def _calc_y(self, next_states, rewards, not_terminal):
         y_vals = rewards
         # Calculating y values for q_network double
-        if self.network_name is "q_network_double":
+        if self.network_name is "deep_q_network_double" or self.network_name is "linear_q_network_double":
             actions = np.argmax(self.sess.run(self.q_values_online, \
                                               feed_dict={self.state_online: next_states}), axis=1)
 

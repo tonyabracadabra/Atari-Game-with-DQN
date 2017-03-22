@@ -24,7 +24,7 @@ import gym
 import keras.backend as K
 
 
-def create_model(window, input_shape, num_actions, model_name='q_network_deep'):  # noqa: D103
+def create_model(window, input_shape, num_actions, model_name='deep_q_network'):  # noqa: D103
     """Create the Deep-Q-network model.
 
     Use Keras to construct a keras.models.Model instance (you can also
@@ -57,7 +57,7 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
     state = Input(shape=input_shape)
     model = None
 
-    if model_name == "q_network_deep":
+    if model_name == "deeq_q_network":
         print "Building " + model_name + " ..."
 
         # First convolutional layer
@@ -75,7 +75,7 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
 
         model = Model(input=state, output=y_pred)
 
-    elif model_name == "q_network_double":
+    elif model_name == "deep_q_network_double":
         print "Building " + model_name + " ..."
 
        # First convolutional layer
@@ -96,7 +96,7 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
 
         model = Model(input=state, output=y_pred)
 
-    elif model_name == "q_network_duel":
+    elif model_name == "deep_q_network_duel":
         print "Building " + model_name + " ..."
         
        # First convolutional layer
@@ -126,7 +126,7 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
 
         model = Model(input=state, output=y_q)
 
-    elif model_name == "q_network_linear":
+    elif model_name == "linear_q_network" or model_name == "linear_q_network_double":
 
         x = Flatten()(state)
         x = Dense(256)(x)
@@ -134,7 +134,9 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
         y_pred = Dense(num_actions)(x)
 
         model = Model(output=y_pred, input=state)
-
+    else:
+        print "Model not supported"
+        exit(1)
     return model
 
 
@@ -178,7 +180,7 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--network_name', default='q_network_double', help='Type of model to use')
+    parser.add_argument('--network_name', default='linear_q_network', help='Type of model to use')
     parser.add_argument('--window', default=4, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), help='new size')
     parser.add_argument('--batch_size', default=32, help='Batch size')
@@ -188,7 +190,7 @@ def main():  # noqa: D103
     parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, help='Frequency for copying weights to target network')
     parser.add_argument('--num_burn_in', default=50000, help='Number of prefilled samples in the replay buffer')
-    parser.add_argument('--num_iterations', default=5000000, help='Number of overal interactions to the environment')
+    parser.add_argument('--num_iterations', default=4000000, help='Number of overal interactions to the environment')
     parser.add_argument('--max_episode_length', default=1000, help='Terminate earlier for one episode')
     parser.add_argument('--train_freq', default=4, help='Frequency for training')
     parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
