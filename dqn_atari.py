@@ -251,13 +251,13 @@ def main():  # noqa: D103
     q_network_online = create_model(args.window, args.new_size, num_actions, args.network_name)
     q_network_target = create_model(args.window, args.new_size, num_actions, args.network_name)
 
-    with open("atari-v0/linear_q_network_double/2700000.json", 'r') as json_file:
+    with open("atari-v0/linear_q_network_double_old/2700000.json", 'r') as json_file:
         loaded_model_json = json_file.read()
         q_network_online = model_from_json(loaded_model_json)
         q_network_target = model_from_json(loaded_model_json)
     # load weights into model
-    q_network_online.load_weights("atari-v0/linear_q_network_double/2700000.h5")
-    q_network_target.load_weights("atari-v0/linear_q_network_double/2700000.h5")
+    q_network_online.load_weights("atari-v0/linear_q_network_double_old/2700000.h5")
+    q_network_target.load_weights("atari-v0/linear_q_network_double_old/2700000.h5")
 
     # create output dir, meant to pop up error when dir exist to avoid over written
     os.mkdir(args.output + "/" + args.network_name)
