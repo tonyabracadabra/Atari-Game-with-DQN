@@ -66,6 +66,8 @@ class DQNAgent:
                  sess):
 
         self.q_network_online, self.q_network_target = q_networks
+        self.online_vars = q_networks.weights
+        self.update_ops = initialize_updates_operations(self.q_network_online)
 
         self.q_values_online = self.q_network_online.output
         self.q_values_target = self.q_network_target.output
@@ -303,9 +305,10 @@ class DQNAgent:
 
                 # Time for updating (copy...) the target network
                 if iter_t % self.target_update_freq == 0:
-                    update_ops = get_hard_target_model_updates(self.q_network_target, self.q_network_online)
+                    update_vals = get_hard_target_model_updates(self.q_network_target, self.q_network_online)
                     # updating the parameters from the previous network
-                    self.sess.run(update_ops)
+                    feed_dict = dict(zip(self.online_vars, update_vals))
+                    self.sess.run(self.update_ops, feed_dict=feed_dict)
 
                 if iter_t % self.train_freq == 0:
                     loss_val = self.update_policy()

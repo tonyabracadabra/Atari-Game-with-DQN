@@ -34,8 +34,19 @@ def get_uninitialized_variables(variables=None):
     else:
         init_flag = sess.run(
             tf.stack([tf.is_variable_initialized(v) for v in variables]))
+
     return [v for v, f in zip(variables, init_flag) if not f]
 
+
+def initialize_updates_operations(online_vars):
+    # placeholders for updating the online network
+    update_phs = [tf.placeholder(tf.float32, shape=var.get_shape()) for var in online_vars]
+    # update operations
+    update_ops = [update_pair[0].assign(update_pair[1]) \
+                      for update_pair in zip(self.target_vars, self.update_phs)]
+
+    return update_ops
+    
 
 def get_soft_target_model_updates(target, source, tau):
     """Return list of target model update ops.
@@ -68,7 +79,7 @@ def get_soft_target_model_updates(target, source, tau):
     weights = map(lambda (x, y): x + y, zip(map(lambda w: (1 - tau) * w, target.get_weights()), \
                                             map(lambda w: tau * w, source.get_weights())))
 
-    return [pair[0].assign(pair[1]) for pair in zip(target.weights, weights)]
+    return weights
 
 
 def get_hard_target_model_updates(target, source):
@@ -90,4 +101,4 @@ def get_hard_target_model_updates(target, source):
       List of tensor update ops.
     """
 
-    return [pair[0].assign(pair[1]) for pair in zip(target.weights, source.get_weights())]
+    return source.get_weights()
