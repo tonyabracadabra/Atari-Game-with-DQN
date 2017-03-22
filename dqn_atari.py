@@ -128,7 +128,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
     elif model_name == "linear_q_network" or model_name == "linear_q_network_double":
 
         x = Flatten()(state)
-        x = Dense(256)(x)
+        x = Dense(512)(x)
 
         y_pred = Dense(num_actions)(x)
 
