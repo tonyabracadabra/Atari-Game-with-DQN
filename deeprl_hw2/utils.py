@@ -38,15 +38,15 @@ def get_uninitialized_variables(variables=None):
     return [v for v, f in zip(variables, init_flag) if not f]
 
 
-def initialize_updates_operations(online_vars):
+def initialize_updates_operations(target_vars):
     # placeholders for updating the online network
-    update_phs = [tf.placeholder(tf.float32, shape=var.get_shape()) for var in online_vars]
+    update_phs = [tf.placeholder(tf.float32, shape=var.get_shape()) for var in target_vars]
     # update operations
     update_ops = [update_pair[0].assign(update_pair[1]) \
-                      for update_pair in zip(self.target_vars, self.update_phs)]
+                      for update_pair in zip(target_vars, update_phs)]
 
     return update_ops
-    
+
 
 def get_soft_target_model_updates(target, source, tau):
     """Return list of target model update ops.
