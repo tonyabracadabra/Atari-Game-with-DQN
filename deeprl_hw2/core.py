@@ -243,11 +243,23 @@ class ReplayMemory:
                (x + 3 % self.max_size not in self._terminal)
 
     def sample(self, batch_size, indexes=None):
-        random_indexes = []
+        random_indexes = set()
+
+        sample_size = batch_size
         while len(random_indexes) < batch_size:
-            new_random_indexes = random.sample(xrange(len(self._samples) - 5), batch_size - len(random_indexes))
+            left = 1.0 * (self.index - 5) / len(self._samples - 10)
+            left_size = int(sample_size * left)
+            right_size = sample_size - left_size
+
+            new_indexes_left = random.sample(xrange(self.index - 5), left_size)
+            new_indexes_right = random.sample(xrange(self.index + 1, len(self._samples) - 5), right_size)
+
+            new_random_indexes = new_indexes_left + new_indexes_right
             new_random_indexes = filter(self.is_valid_index, new_random_indexes)
-            random_indexes.extend(new_random_indexes)
+
+            random_indexes = random_indexes.union(new_random_indexes)
+
+            sample_size -= len(random_indexes)
 
         random_samples = []
         not_terminal = []

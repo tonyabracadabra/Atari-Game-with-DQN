@@ -252,14 +252,14 @@ class DQNAgent:
             print "Start " + str(episode_count) + "th Episode ..."
             action_count = 0
             for j in xrange(max_episode_length):
-                if iter_t % save_freq == 0:
-                    self.evaluate_no_render()
-                    model_json = self.q_network_online.to_json()
-                    with open(output_folder + str(iter_t) + ".json", "w") as json_file:
-                        json_file.write(model_json)
-                        # serialize weights to HDF5
-                        self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
-                    print("Saved model to disk")
+                # if iter_t % save_freq == 0:
+                #     self.evaluate_no_render()
+                #     model_json = self.q_network_online.to_json()
+                #     with open(output_folder + str(iter_t) + ".json", "w") as json_file:
+                #         json_file.write(model_json)
+                #         # serialize weights to HDF5
+                #         self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
+                #     print("Saved model to disk")
 
                 iter_t += 1
                 if action_count == self.repetition_times:

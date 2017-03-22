@@ -133,7 +133,7 @@ def create_model(window, input_shape, num_actions, model_name='q_network_deep'):
 
         y_pred = Dense(num_actions)(x)
 
-        model = Model(input=state, output=y_pred)
+        model = Model(output=y_pred, input=state)
 
     return model
 
@@ -223,7 +223,7 @@ def main():  # noqa: D103
     policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000000)
     # policy = GreedyEpsilonPolicy(args.epsilon)
 
-    os.mkdir(args.output + "/" + args.network_name)
+    # os.mkdir(args.output + "/" + args.network_name)
     # load json and create model
 
     # # load json and create model
