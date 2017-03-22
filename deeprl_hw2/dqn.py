@@ -108,10 +108,10 @@ class DQNAgent:
             # Placeholder that we want to feed the updat in, just one value
             self.y_true = tf.placeholder(tf.float32, [None, ])
             # Placeholder that specify which action
-            self.action = tf.placeholder(tf.int32, [None,])
+            self.action = tf.placeholder(tf.int32, [None, ])
             # Transform it to one hot representation
-            self.action_one_hot = tf.cast(tf.one_hot(self.action, depth = self.num_actions, \
-                                          on_value=1, off_value=0), tf.float32)
+            self.action_one_hot = tf.cast(tf.one_hot(self.action, depth=self.num_actions, \
+                                                     on_value=1, off_value=0), tf.float32)
 
             # the output of the q_network is y_pred
             self.y_pred = tf.reduce_sum(tf.multiply(self.q_values_online, self.action_one_hot), axis=1)
@@ -154,7 +154,7 @@ class DQNAgent:
         --------
         selected action
         """
-        state = np.expand_dims(state, axis = 0)
+        state = np.expand_dims(state, axis=0)
         q_values_val = self.calc_q_values(state)
 
         return self.policy.select_action(q_values_val, True)
@@ -183,12 +183,12 @@ class DQNAgent:
             actions = np.stack(self.update_pool['actions'])
             rewards = np.stack(self.update_pool['rewards'])
             not_terminal = self.update_pool['not_terminal']
-            self.update_pool = {'actions':[], 'rewards':[], 'states':[], 'next_states':[], 'not_terminal':[]}
+            self.update_pool = {'actions': [], 'rewards': [], 'states': [], 'next_states': [], 'not_terminal': []}
 
         y_vals = self._calc_y(next_states, rewards, not_terminal)
 
         _, loss_val = self.sess.run([self.optimizer, self.loss], \
-                        feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
+                                    feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
 
         return loss_val
 
@@ -223,21 +223,30 @@ class DQNAgent:
         env.reset()
 
         if not self.experience_replay:
-            self.update_pool = {'actions':[], 'rewards':[], 'states':[], 'next_states':[], 'not_terminal':[]}
+            self.update_pool = {'actions': [], 'rewards': [], 'states': [], 'next_states': [], 'not_terminal': []}
 
         iter_t = 0
         episode_count = 0
 
         init_state = np.stack(map(self.preprocessor.process_state_for_network, \
-                                  [env.step(0)[0] for i in xrange(4)]), axis = 2)
+                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
         curr_state = init_state
-
+        num_lives = 3
         if self.experience_replay:
             print "Start filling up the replay memory before update ..."
             for j in xrange(self.num_burn_in):
                 action = np.random.randint(0, self.num_actions)
-                next_state, reward, is_terminal, debug_info = self._append_to_memory(curr_state, action, env)
-                print debug_info
+                # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
+                next_frame, reward, is_terminal, debug_info = env.step(action)
+                life_terminal = False
+                if debug_info['ale.lives'] < num_lives:
+                    life_terminal = True
+                    reward = -5.0
+                elif debug_info['ale.lives'] > num_lives:
+                    reward = 5.0
+                num_lives = debug_info['ale.lives']
+                next_state = self._append_to_memory(curr_state, action, next_frame, reward,
+                                                    life_terminal or is_terminal)
                 curr_state = next_state
             print "Has Prefilled the replay memory"
 
@@ -245,13 +254,14 @@ class DQNAgent:
             env.reset()
             # Get the initial state
             curr_state = init_state
-            action = self.select_action(curr_state)
+            action = 0
 
             episode_count += 1
             total_reward = 0
 
             print "Start " + str(episode_count) + "th Episode ..."
             action_count = 0
+
             for j in xrange(max_episode_length):
                 if iter_t % save_freq == 0:
                     self.evaluate_no_render()
@@ -268,7 +278,19 @@ class DQNAgent:
                     action = self.select_action(curr_state)
                 action_count += 1
 
-                next_state, reward, is_terminal, debug_info = self._append_to_memory(curr_state, action, env)
+                # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
+                next_frame, reward, is_terminal, debug_info = env.step(action)
+                life_terminal = False
+                if debug_info['ale.lives'] < num_lives:
+                    life_terminal = True
+                    reward = -5.0
+                elif debug_info['ale.lives'] > num_lives:
+                    reward = 5.0
+                num_lives = debug_info['ale.lives']
+
+                next_state = self._append_to_memory(curr_state, action, next_frame, reward,
+                                                    life_terminal or is_terminal)
+
                 total_reward += reward
 
                 if is_terminal:
@@ -311,18 +333,16 @@ class DQNAgent:
 
         return y_vals
 
-    def _append_to_memory(self, curr_state, action, env):
-        # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
-        next_frame, reward, is_terminal, debug_info = env.step(action)
+    def _append_to_memory(self, curr_state, action, next_frame, reward, is_terminal):
+
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
         next_frame = self.preprocessor.process_state_for_memory(next_frame)
 
         # Remove flickering effect
         # next_frame = np.maximum(curr_state[:, :, -1], next_frame)
-
-        next_state = np.expand_dims(next_frame, axis = 2)
+        next_state = np.expand_dims(next_frame, axis=2)
         # append the next state to the last 3 frames in currstate to form the new state
-        next_state = np.append(curr_state[:, :, 1:], next_state, axis = 2)
+        next_state = np.append(curr_state[:, :, 1:], next_state, axis=2)
 
         if self.experience_replay:
             self.memory.append(next_frame, action, self.preprocessor.process_reward(reward), is_terminal)
@@ -333,7 +353,7 @@ class DQNAgent:
             self.update_pool['actions'].append(action)
             self.update_pool['not_terminal'].append(not is_terminal)
 
-        return next_state, reward, is_terminal, debug_info
+        return next_state
 
     def evaluate_no_render(self):
         num_episodes = 0

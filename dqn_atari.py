@@ -190,7 +190,7 @@ def main():  # noqa: D103
     parser.add_argument('--num_burn_in', default=50000, help='Number of prefilled samples in the replay buffer')
     parser.add_argument('--num_iterations', default=5000000, help='Number of overal interactions to the environment')
     parser.add_argument('--max_episode_length', default=1000, help='Terminate earlier for one episode')
-    parser.add_argument('--train_freq', default=8, help='Frequency for training')
+    parser.add_argument('--train_freq', default=4, help='Frequency for training')
     parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
     parser.add_argument('--repetition_times', default=3, help='Parameter for action repetition')
     parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
