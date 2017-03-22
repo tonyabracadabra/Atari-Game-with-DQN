@@ -240,9 +240,6 @@ class DQNAgent:
                 curr_state = next_state
             print "Has Prefilled the replay memory"
 
-        while True:
-            self.memory.sample(self.batch_size)
-
         while iter_t < num_iterations:
             env.reset()
             # Get the initial state
