@@ -238,7 +238,6 @@ class DQNAgent:
                 action = np.random.randint(0, self.num_actions)
                 # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
                 next_frame, reward, is_terminal, debug_info = env.step(action)
-                print reward
                 life_terminal = False
                 if debug_info['ale.lives'] < num_lives:
                     life_terminal = True
