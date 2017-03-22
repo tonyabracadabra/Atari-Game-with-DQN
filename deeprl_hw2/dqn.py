@@ -241,7 +241,9 @@ class DQNAgent:
         if self.experience_replay:
             print "Start filling up the replay memory before update ..."
             for j in xrange(self.num_burn_in):
-                action = env.action_space.sample()
+                # action = env.action_space.sample()
+                action = self.select_action(curr_state)
+
                 # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
                 next_frame, reward, is_terminal, debug_info = env.step(action)
                 life_terminal = False
@@ -345,7 +347,7 @@ class DQNAgent:
 
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
         next_frame = self.preprocessor.process_state_for_memory(next_frame)
-        
+
         # Remove flickering effect
         # next_frame = np.maximum(curr_state[:, :, -1], next_frame)
         next_state = np.expand_dims(next_frame, axis=2)

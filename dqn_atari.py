@@ -128,7 +128,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
     elif model_name == "linear_q_network" or model_name == "linear_q_network_double":
 
         x = Flatten()(state)
-        x = Dense(512)(x)
+        x = Dense(256)(x)
 
         y_pred = Dense(num_actions)(x)
 
@@ -179,27 +179,27 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--network_name', default='linear_q_network_double', help='Type of model to use')
-    parser.add_argument('--window', default=4, help='how many frames are used each time')
-    parser.add_argument('--new_size', default=(84, 84), help='new size')
-    parser.add_argument('--batch_size', default=32, help='Batch size')
-    parser.add_argument('--replay_buffer_size', default=750000, help='Replay buffer size')
-    parser.add_argument('--gamma', default=0.99, help='Discount factor')
-    parser.add_argument('--alpha', default=0.0001, help='Learning rate')
-    parser.add_argument('--epsilon', default=0.05, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--target_update_freq', default=10000, help='Frequency for copying weights to target network')
-    parser.add_argument('--num_burn_in', default=50000, help='Number of prefilled samples in the replay buffer')
-    parser.add_argument('--num_iterations', default=5000000, help='Number of overal interactions to the environment')
-    parser.add_argument('--max_episode_length', default=200000, help='Terminate earlier for one episode')
-    parser.add_argument('--train_freq', default=8, help='Frequency for training')
-    parser.add_argument('--experience_replay', default=True, help='Choose whether or not to use experience replay')
-    parser.add_argument('--repetition_times', default=3, help='Parameter for action repetition')
-    parser.add_argument('-o', '--output', default='atari-v0', help='Directory to save data to')
+    parser.add_argument('--network_name', default='deep_q_network_duel', type=str, help='Type of model to use')
+    parser.add_argument('--window', default=4, type=int, help='how many frames are used each time')
+    parser.add_argument('--new_size', default=(84, 84), type=tuple, help='new size')
+    parser.add_argument('--batch_size', default=32, type=int, help='Batch size')
+    parser.add_argument('--replay_buffer_size', default=750000, type=int, help='Replay buffer size')
+    parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
+    parser.add_argument('--alpha', default=0.0001, type=float, help='Learning rate')
+    parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
+    parser.add_argument('--target_update_freq', default=10000, type=int, help='Frequency for copying weights to target network')
+    parser.add_argument('--num_burn_in', default=50000, type=int, help='Number of prefilled samples in the replay buffer')
+    parser.add_argument('--num_iterations', default=5000000, type=int, help='Number of overal interactions to the environment')
+    parser.add_argument('--max_episode_length', default=200000, type=int, help='Terminate earlier for one episode')
+    parser.add_argument('--train_freq', default=4, type=int, help='Frequency for training')
+    parser.add_argument('--experience_replay', default=True, type=bool, help='Choose whether or not to use experience replay')
+    parser.add_argument('--repetition_times', default=3, type=int, help='Parameter for action repetition')
+    parser.add_argument('-o', '--output', default='atari-v0', type=str, help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
-    parser.add_argument('--train', default=True, help='Train/Evaluate, set True if train the model')
-    parser.add_argument('--model_path', default='atari-v0', help='specify model path to evaluation')
+    parser.add_argument('--train', default=True, type=bool, help='Train/Evaluate, set True if train the model')
+    parser.add_argument('--model_path', default='atari-v0', type=str, help='specify model path to evaluation')
     parser.add_argument('--model_num', default=0, type=int, help='specify saved model number during train')
-    parser.add_argument('--log_dir', default='log', help='specify log folder to save evaluate result')
+    parser.add_argument('--log_dir', default='log', type=str, help='specify log folder to save evaluate result')
     parser.add_argument('--eval_num', default=100, type=int, help='number of evaluation to run')
     parser.add_argument('--save_freq', default=100000, type=int, help='model save frequency')
 
@@ -250,6 +250,14 @@ def main():  # noqa: D103
     '''Train the model'''
     q_network_online = create_model(args.window, args.new_size, num_actions, args.network_name)
     q_network_target = create_model(args.window, args.new_size, num_actions, args.network_name)
+
+    with open("atari-v0/linear_q_network_double_old/2700000.json", 'r') as json_file:
+        loaded_model_json = json_file.read()
+        q_network_online = model_from_json(loaded_model_json)
+        q_network_target = model_from_json(loaded_model_json)
+    # load weights into model
+    q_network_online.load_weights("atari-v0/linear_q_network_double_old/2700000.h5")
+    q_network_target.load_weights("atari-v0/linear_q_network_double_old/2700000.h5")
 
     # create output dir, meant to pop up error when dir exist to avoid over written
     os.mkdir(args.output + "/" + args.network_name)
