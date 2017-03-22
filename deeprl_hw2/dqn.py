@@ -235,8 +235,9 @@ class DQNAgent:
         if self.experience_replay:
             print "Start filling up the replay memory before update ..."
             for j in xrange(self.num_burn_in):
-                action = self.select_action(curr_state)
-                next_state, reward, is_terminal = self._append_to_memory(curr_state, action, env)
+                action = np.random.randint(0, self.num_actions)
+                next_state, reward, is_terminal, debug_info = self._append_to_memory(curr_state, action, env)
+                print debug_info
                 curr_state = next_state
             print "Has Prefilled the replay memory"
 
@@ -267,7 +268,7 @@ class DQNAgent:
                     action = self.select_action(curr_state)
                 action_count += 1
 
-                next_state, reward, is_terminal = self._append_to_memory(curr_state, action, env)
+                next_state, reward, is_terminal, debug_info = self._append_to_memory(curr_state, action, env)
                 total_reward += reward
 
                 if is_terminal:
@@ -312,7 +313,7 @@ class DQNAgent:
 
     def _append_to_memory(self, curr_state, action, env):
         # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
-        next_frame, reward, is_terminal, _ = env.step(action)
+        next_frame, reward, is_terminal, debug_info = env.step(action)
         # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
         next_frame = self.preprocessor.process_state_for_memory(next_frame)
 
@@ -332,7 +333,7 @@ class DQNAgent:
             self.update_pool['actions'].append(action)
             self.update_pool['not_terminal'].append(not is_terminal)
 
-        return next_state, reward, is_terminal
+        return next_state, reward, is_terminal, debug_info
 
     def evaluate_no_render(self):
         num_episodes = 0

@@ -237,7 +237,7 @@ class ReplayMemory:
         self._terminal.add(final_index)
 
     def is_valid_index(self, x):
-        if self.index - 4 < x <= self.index:
+        if self.index - 4 <= x <= self.index:
             return False
             
         return (x not in self._terminal) and \
@@ -246,11 +246,11 @@ class ReplayMemory:
                (x + 3 % self.max_size not in self._terminal)
 
     def sample(self, batch_size, indexes=None):
-        random_indexes = []
+        random_indexes = set()
         while len(random_indexes) < batch_size:
             new_random_indexes = random.sample(xrange(len(self._samples) - 4), batch_size - len(random_indexes))
             new_random_indexes = filter(self.is_valid_index, new_random_indexes)
-            random_indexes.extend(new_random_indexes)
+            random_indexes = random_indexes.union(new_random_indexes)
 
         random_samples = []
         not_terminal = []
@@ -268,6 +268,8 @@ class ReplayMemory:
 
     def clear(self):
         self._samples = []
+        self._terminal = set()
+        self.index = 0
 
     def __iter__(self):
         return iter(self._samples)

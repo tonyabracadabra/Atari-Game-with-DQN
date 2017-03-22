@@ -32,7 +32,7 @@ def huber_loss(y_true, y_pred, max_grad=1.):
     greater_cond = tf.boolean_mask(delta, delta >= max_grad)
 
     less = 0.5 * tf.square(less_cond)
-    greater = max_grad * greater_cond - 0.5 * max_grad
+    greater = max_grad * greater_cond - 0.5 * max_grad * max_grad
 
     result = tf.concat([less, greater], axis=0)
 
