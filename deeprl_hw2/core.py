@@ -255,8 +255,8 @@ class ReplayMemory:
             left_size = int(sample_size * left)
             right_size = sample_size - left_size
 
-            new_indexes_left = random.sample(xrange(self.index - 5), left_size)
-            new_indexes_right = random.sample(xrange(self.index + 1, len(self._samples) - 5), right_size)
+            new_indexes_left = random.sample(xrange(self.index - 4), left_size)
+            new_indexes_right = random.sample(xrange(self.index + 1, len(self._samples) - 4), right_size)
 
             new_random_indexes = new_indexes_left + new_indexes_right
             new_random_indexes = filter(self.is_valid_index, new_random_indexes)
