@@ -172,5 +172,5 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
 
     def reset(self):
         """Start the decay over at the start value."""
-        self.epsilon += (self.curr_steps - self.start_value) * self.decrement
-        self.curr_steps = self.start_value
+        self.epsilon = self.start_value
+        self.curr_steps = 0
