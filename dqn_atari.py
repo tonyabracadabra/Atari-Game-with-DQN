@@ -188,7 +188,7 @@ def main():  # noqa: D103
     parser.add_argument('--alpha', default=0.0001, type=float, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, type=int, help='Frequency for copying weights to target network')
-    parser.add_argument('--num_burn_in', default=50000, type=int, help='Number of prefilled samples in the replay buffer')
+    parser.add_argument('--num_burn_in', default=50, type=int, help='Number of prefilled samples in the replay buffer')
     parser.add_argument('--num_iterations', default=5000000, type=int, help='Number of overal interactions to the environment')
     parser.add_argument('--max_episode_length', default=2000000, type=int, help='Terminate earlier for one episode')
     parser.add_argument('--train_freq', default=4, type=int, help='Frequency for training')
@@ -249,16 +249,16 @@ def main():  # noqa: D103
     q_network_online = create_model(args.window, args.new_size, num_actions, args.network_name)
     q_network_target = create_model(args.window, args.new_size, num_actions, args.network_name)
 
-    with open("atari-v0/linear_q_network_double_old/2700000.json", 'r') as json_file:
-        loaded_model_json = json_file.read()
-        q_network_online = model_from_json(loaded_model_json)
-        q_network_target = model_from_json(loaded_model_json)
-    # load weights into model
-    q_network_online.load_weights("atari-v0/linear_q_network_double_old/2700000.h5")
-    q_network_target.load_weights("atari-v0/linear_q_network_double_old/2700000.h5")
+    # with open("atari-v0/linear_q_network_double_old/2700000.json", 'r') as json_file:
+    #     loaded_model_json = json_file.read()
+    #     q_network_online = model_from_json(loaded_model_json)
+    #     q_network_target = model_from_json(loaded_model_json)
+    # # load weights into model
+    # q_network_online.load_weights("atari-v0/linear_q_network_double_old/2700000.h5")
+    # q_network_target.load_weights("atari-v0/linear_q_network_double_old/2700000.h5")
 
     # create output dir, meant to pop up error when dir exist to avoid over written
-    os.mkdir(args.output + "/" + args.network_name)
+    # os.mkdir(args.output + "/" + args.network_name)
 
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions,
