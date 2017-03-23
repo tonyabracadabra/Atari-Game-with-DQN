@@ -214,8 +214,9 @@ def main():  # noqa: D103
     # define model object
     preprocessor = AtariPreprocessor(args.new_size)
     memory = ReplayMemory(args.replay_buffer_size, args.window)
+
+    # Initiating policy for both tasks (training and evaluating)
     policy = LinearDecayGreedyEpsilonPolicy(args.epsilon, 0, 1000000)
-    # policy = GreedyEpsilonPolicy(args.epsilon)
 
     if not args.train:
         '''Evaluate the model'''
@@ -237,7 +238,7 @@ def main():  # noqa: D103
         q_network_target.load_weights(model_dir + ".h5")
 
         with tf.Session() as sess:
-            dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions,
+            dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policies, num_actions,
                                  args.gamma, \
                                  args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
                                  args.experience_replay, args.repetition_times, args.network_name, args.env, sess)

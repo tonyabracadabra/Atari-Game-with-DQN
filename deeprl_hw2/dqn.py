@@ -140,7 +140,7 @@ class DQNAgent:
 
         return q_values_val
 
-    def select_action(self, state, **kwargs):
+    def select_action(self, state, is_training):
         """Select the action based on the current state.
 
         You will probably want to vary your behavior here based on
@@ -164,7 +164,7 @@ class DQNAgent:
         state = np.expand_dims(state, axis=0)
         q_values_val = self.calc_q_values(state)
 
-        return self.policy.select_action(q_values_val, True)
+        return self.policy.select_action(q_values_val, is_training)
 
     def update_policy(self):
         """Update your policy.
@@ -226,6 +226,7 @@ class DQNAgent:
         """
 
         init = tf.global_variables_initializer()
+        self.init_state = get_init_state(env, self.preprocessor)
         self.sess.run(init)
         env.reset()
 
@@ -235,25 +236,31 @@ class DQNAgent:
         iter_t = 0
         episode_count = 0
 
-        init_state = np.stack(map(self.preprocessor.process_state_for_network, \
-                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
-        curr_state = init_state
-        num_lives = 3
+        curr_state = self.init_state
+
+        # Get the initial lives
+        prev_lives = env.env.ale.lives()
         if self.experience_replay:
             print "Start filling up the replay memory before update ..."
             for j in xrange(self.num_burn_in):
                 # action = env.action_space.sample()
-                action = self.select_action(curr_state)
+                action = self.select_action(curr_state, is_training=True)
 
                 # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
-                next_frame, reward, is_terminal, debug_info = env.step(action)
+                next_frame, reward, is_terminal, _ = env.step(action)
                 life_terminal = False
-                if debug_info['ale.lives'] < num_lives:
+
+                # Get current lives
+                curr_lives = env.env.ale.lives()
+
+                if curr_lives < prev_lives:
                     life_terminal = True
                     reward = -5.0
-                elif debug_info['ale.lives'] > num_lives:
+                elif curr_lives > prev_lives:
                     reward = 50.0
-                num_lives = debug_info['ale.lives']
+
+                prev_lives = curr_lives
+
                 next_state = self._append_to_memory(curr_state, action, next_frame, reward,
                                                     life_terminal or is_terminal)
                 curr_state = next_state
@@ -261,43 +268,45 @@ class DQNAgent:
 
         while iter_t < num_iterations:
             # Get the initial state
-            num_lives = 3
             env.reset()
-            curr_state = init_state
-            action = 0
+
+            curr_state = self.init_state
+            action, total_reward, action_count = 0, 0, 0
 
             episode_count += 1
-            total_reward = 0
+
+            # Get the initial lives
+            prev_lives = env.env.ale.lives()
 
             print "Start " + str(episode_count) + "th Episode ..."
-            action_count = 0
-
             for j in xrange(max_episode_length):
-                # if iter_t % save_freq == 0:
-                #     self.evaluate_no_render()
-                #     model_json = self.q_network_online.to_json()
-                #     with open(output_folder + str(iter_t) + ".json", "w") as json_file:
-                #         json_file.write(model_json)
-                #         # serialize weights to HDF5
-                #         self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
-                #     print("Saved model to disk")
+                if iter_t % save_freq == 0:
+                    self.evaluate_no_render()
+                    model_json = self.q_network_online.to_json()
+                    with open(output_folder + str(iter_t) + ".json", "w") as json_file:
+                        json_file.write(model_json)
+                        # serialize weights to HDF5
+                        self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
+                    print("Saved model to disk")
 
                 iter_t += 1
                 if action_count == self.repetition_times:
                     action_count = 0
-                    action = self.select_action(curr_state)
+                    action = self.select_action(curr_state, is_training=True)
                 action_count += 1
 
                 # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
-                next_frame, reward, is_terminal, debug_info = env.step(action)
+                next_frame, reward, is_terminal, _ = env.step(action)
                 life_terminal = False
-                if debug_info['ale.lives'] < num_lives:
+                curr_lives = env.env.ale.lives()
+
+                if curr_lives < prev_lives:
                     life_terminal = True
                     reward = -5.0
-                elif debug_info['ale.lives'] > num_lives:
+                elif curr_lives > prev_lives:
                     reward = 50.0
-                num_lives = debug_info['ale.lives']
 
+                prev_lives = curr_lives
                 next_state = self._append_to_memory(curr_state, action, next_frame, reward,
                                                     life_terminal or is_terminal)
 
@@ -371,29 +380,28 @@ class DQNAgent:
         env = gym.make(self.env_name)
 
         reward_avg = 0
+
         print "Start evaluating ... "
-        init_state = np.stack(map(self.preprocessor.process_state_for_network, \
-                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
         while num_episodes < 20:
             env.reset()
             # Get the initial state
-            curr_state = init_state
+            curr_state = self.init_state
 
             is_terminal = False
             total_reward = 0
             while not is_terminal:
-                action = np.argmax(self.sess.run(self.q_values_online, feed_dict={self.state_online: curr_state}))
-                next_state, reward, is_terminal, _ = env.step(action)
+                action = self.select_action(curr_state, is_training=False)
+                next_frame, reward, is_terminal, _ = env.step(action)
+
+                # process and generate next state
+                next_frame = self.preprocessor.process_state_for_network(next_frame)
+                next_state = np.expand_dims(next_frame, axis=2)
+                next_state = np.append(curr_state[:, :, 1:], next_state, axis=2)
+
                 total_reward += reward
 
-                next_state = self.preprocessor.process_state_for_network(next_state)
-                next_state = np.expand_dims(next_state, axis=2)
-                next_state = np.expand_dims(next_state, axis=0)
-                # append the next state to the last 3 frames in currstate to form the new state
-                next_state = np.append(curr_state[:, :, :, 1:], next_state, axis=3)
-
                 curr_state = next_state
-
+            
             reward_avg += total_reward
             num_episodes += 1
 
@@ -422,30 +430,24 @@ class DQNAgent:
         env = wrappers.Monitor(env, log_file)
 
         while num_episodes > 0:
-            next_frame = env.reset()
-
+            env.reset()
             # Get the initial state
-            curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
-                                      [env.step(0)[0] for _ in xrange(4)]), axis=2)
-            curr_state = np.expand_dims(curr_state, axis=0)
-
-            action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
+            curr_state = self.init_state
 
             is_terminal = False
 
             i = 0
             while not is_terminal:
-                # env.render()
+                env.render()
                 if i % self.repetition_times == 0:
-                    action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
+                    action = self.select_action(curr_state, is_training=False)
 
                 next_frame, reward, is_terminal, _ = env.step(action)
 
-                next_state = self.preprocessor.process_state_for_network(next_frame)
-                next_state = np.expand_dims(next_state, axis=2)
-                next_state = np.expand_dims(next_state, axis=0)
-                # append the next state to the last 3 frames in currstate to form the new state
-                next_state = np.append(curr_state[:, :, :, 1:], next_state, axis=3)
+                # process and generate next state
+                next_frame = self.preprocessor.process_state_for_network(next_frame)
+                next_state = np.expand_dims(next_frame, axis=2)
+                next_state = np.append(curr_state[:, :, 1:], next_state, axis=2)
 
                 curr_state = next_state
 

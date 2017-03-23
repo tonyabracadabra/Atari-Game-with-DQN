@@ -2,6 +2,7 @@
 
 import semver
 import tensorflow as tf
+import numpy as np
 
 
 def get_uninitialized_variables(variables=None):
@@ -102,3 +103,11 @@ def get_hard_target_model_updates(target, source):
     """
 
     return source.get_weights()
+
+def get_init_state(env, preprocessor):
+    env.reset()
+    
+    init_state = np.stack(map(preprocessor.process_state_for_network, \
+                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
+
+    return init_state
