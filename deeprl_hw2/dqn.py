@@ -451,4 +451,5 @@ class DQNAgent:
 
                 i += 1
             print str(num_episodes) + "th Episode Finished"
+            print "Run " + str(i) + " frames"
             num_episodes -= 1
