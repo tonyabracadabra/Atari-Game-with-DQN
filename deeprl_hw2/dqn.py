@@ -66,6 +66,9 @@ class DQNAgent:
                  sess):
 
         self.q_network_online, self.q_network_target = q_networks
+        self.target_vars = self.q_network_target.weights
+
+        self.update_phs, self.update_ops = initialize_updates_operations(self.target_vars)
 
         self.q_values_online = self.q_network_online.output
         self.q_values_target = self.q_network_target.output
@@ -239,8 +242,8 @@ class DQNAgent:
         if self.experience_replay:
             print "Start filling up the replay memory before update ..."
             for j in xrange(self.num_burn_in):
-                # action = env.action_space.sample()
-                action = self.select_action(curr_state)
+                action = env.action_space.sample()
+                # action = self.select_action(curr_state)
 
                 # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
                 next_frame, reward, is_terminal, debug_info = env.step(action)
@@ -270,14 +273,14 @@ class DQNAgent:
             action_count = 0
 
             for j in xrange(max_episode_length):
-                if iter_t % save_freq == 0:
-                    self.evaluate_no_render()
-                    model_json = self.q_network_online.to_json()
-                    with open(output_folder + str(iter_t) + ".json", "w") as json_file:
-                        json_file.write(model_json)
-                        # serialize weights to HDF5
-                        self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
-                    print("Saved model to disk")
+                # if iter_t % save_freq == 0:
+                #     self.evaluate_no_render()
+                #     model_json = self.q_network_online.to_json()
+                #     with open(output_folder + str(iter_t) + ".json", "w") as json_file:
+                #         json_file.write(model_json)
+                #         # serialize weights to HDF5
+                #         self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
+                #     print("Saved model to disk")
 
                 iter_t += 1
                 if action_count == self.repetition_times:
@@ -305,9 +308,10 @@ class DQNAgent:
 
                 # Time for updating (copy...) the target network
                 if iter_t % self.target_update_freq == 0:
-                    update_ops = get_hard_target_model_updates(self.q_network_target, self.q_network_online)
+                    update_vals = get_hard_target_model_updates(self.q_network_target, self.q_network_online)
                     # updating the parameters from the previous network
-                    self.sess.run(update_ops)
+                    feed_dict = dict(zip(self.update_phs, update_vals))
+                    self.sess.run(self.update_ops, feed_dict=feed_dict)
 
                 if iter_t % self.train_freq == 0:
                     loss_val = self.update_policy()
@@ -368,12 +372,12 @@ class DQNAgent:
 
         reward_avg = 0
         print "Start evaluating ... "
+        init_state = np.stack(map(self.preprocessor.process_state_for_network, \
+                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
         while num_episodes < 20:
             env.reset()
             # Get the initial state
-            curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
-                                      [env.step(0)[0] for _ in xrange(4)]), axis=2)
-            curr_state = np.expand_dims(curr_state, axis=0)
+            curr_state = init_state
 
             is_terminal = False
             total_reward = 0
@@ -431,7 +435,7 @@ class DQNAgent:
 
             i = 0
             while not is_terminal:
-                # env.render()
+                env.render()
                 if i % self.repetition_times == 0:
                     action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
 
