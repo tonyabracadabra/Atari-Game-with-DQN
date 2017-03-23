@@ -239,8 +239,8 @@ class DQNAgent:
         if self.experience_replay:
             print "Start filling up the replay memory before update ..."
             for j in xrange(self.num_burn_in):
-                # action = env.action_space.sample()
-                action = self.select_action(curr_state)
+                action = env.action_space.sample()
+                # action = self.select_action(curr_state)
 
                 # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
                 next_frame, reward, is_terminal, debug_info = env.step(action)
@@ -431,7 +431,7 @@ class DQNAgent:
 
             i = 0
             while not is_terminal:
-                # env.render()
+                env.render()
                 if i % self.repetition_times == 0:
                     action = np.argmax(self.sess.run(self.q_values_target, feed_dict={self.state_target: curr_state}))
 
