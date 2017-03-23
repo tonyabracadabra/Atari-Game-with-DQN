@@ -242,12 +242,15 @@ class DQNAgent:
         prev_lives = env.env.ale.lives()
         if self.experience_replay:
             print "Start filling up the replay memory before update ..."
+
             for j in xrange(self.num_burn_in):
-                # action = env.action_space.sample()
-                action = self.select_action(curr_state, is_training=True)
+
+                # action = self.select_action(curr_state, is_training=True)
+                action = env.action_space.sample()
 
                 # Execute action a_t in emulator and observe reward r_t and image x_{t+1}
                 next_frame, reward, is_terminal, _ = env.step(action)
+
                 life_terminal = False
 
                 # Get current lives
@@ -263,7 +266,14 @@ class DQNAgent:
 
                 next_state = self._append_to_memory(curr_state, action, next_frame, reward,
                                                     life_terminal or is_terminal)
-                curr_state = next_state
+                
+                # If terminal, reset and goes back to the initial state
+                if is_terminal:
+                    env.reset()
+                    curr_state = self.init_state
+                else:
+                    curr_state = next_state
+
             print "Has Prefilled the replay memory"
 
         while iter_t < num_iterations:
