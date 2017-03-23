@@ -67,7 +67,8 @@ class DQNAgent:
 
         self.q_network_online, self.q_network_target = q_networks
         self.target_vars = self.q_network_target.weights
-        self.update_ops = initialize_updates_operations(self.target_vars)
+
+        self.update_phs, self.update_ops = initialize_updates_operations(self.target_vars)
 
         self.q_values_online = self.q_network_online.output
         self.q_values_target = self.q_network_target.output
@@ -309,7 +310,7 @@ class DQNAgent:
                 if iter_t % self.target_update_freq == 0:
                     update_vals = get_hard_target_model_updates(self.q_network_target, self.q_network_online)
                     # updating the parameters from the previous network
-                    feed_dict = dict(zip(self.target_vars, update_vals))
+                    feed_dict = dict(zip(self.update_phs, update_vals))
                     self.sess.run(self.update_ops, feed_dict=feed_dict)
 
                 if iter_t % self.train_freq == 0:
@@ -371,12 +372,12 @@ class DQNAgent:
 
         reward_avg = 0
         print "Start evaluating ... "
+        init_state = np.stack(map(self.preprocessor.process_state_for_network, \
+                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
         while num_episodes < 20:
             env.reset()
             # Get the initial state
-            curr_state = np.stack(map(self.preprocessor.process_state_for_network, \
-                                      [env.step(0)[0] for _ in xrange(4)]), axis=2)
-            curr_state = np.expand_dims(curr_state, axis=0)
+            curr_state = init_state
 
             is_terminal = False
             total_reward = 0

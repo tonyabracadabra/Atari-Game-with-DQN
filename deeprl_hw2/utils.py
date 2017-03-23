@@ -45,7 +45,7 @@ def initialize_updates_operations(target_vars):
     update_ops = [update_pair[0].assign(update_pair[1]) \
                       for update_pair in zip(target_vars, update_phs)]
 
-    return update_ops
+    return update_phs, update_ops
 
 
 def get_soft_target_model_updates(target, source, tau):
