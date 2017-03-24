@@ -223,7 +223,8 @@ class ReplayMemory:
         if self.previou_frame is not None:
             new_frame = np.maximum(next_frame, self.previou_frame)
             sample = Sample(new_frame, action, reward)
-
+        else:
+            sample = Sample(next_frame, action, reward)
         self.previou_frame = next_frame
 
         if is_terminal:
