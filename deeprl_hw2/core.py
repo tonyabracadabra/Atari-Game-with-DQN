@@ -217,9 +217,14 @@ class ReplayMemory:
         self.index = 0
         self._samples = []
         self._terminal = set()
+        self.previou_frame = None
 
     def append(self, next_frame, action, reward, is_terminal):
-        sample = Sample(next_frame, action, reward)
+        if self.previou_frame is not None:
+            new_frame = np.maximum(next_frame, self.previou_frame)
+            sample = Sample(new_frame, action, reward)
+
+        self.previou_frame = next_frame
 
         if is_terminal:
             self._end_episode(self.index)
@@ -232,6 +237,7 @@ class ReplayMemory:
             self._samples.append(sample)
 
         self.index = (self.index + 1) % self.max_size
+
 
     def _end_episode(self, final_index):
         self._terminal.add(final_index)
