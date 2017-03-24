@@ -217,15 +217,20 @@ class ReplayMemory:
         self.index = 0
         self._samples = []
         self._terminal = set()
-        self.previou_frame = None
+
+        # Helper variables for merging flickering frames
+        self.prev_frame = None
+        self.prev_terminal = True
 
     def append(self, next_frame, action, reward, is_terminal):
-        if self.previou_frame is not None:
-            new_frame = np.maximum(next_frame, self.previou_frame)
+        if self.prev_terminal:
+            new_frame = np.maximum(next_frame, self.prev_frame)
             sample = Sample(new_frame, action, reward)
         else:
             sample = Sample(next_frame, action, reward)
-        self.previou_frame = next_frame
+
+        self.prev_terminal = is_terminal
+        self.prev_frame = next_frame
 
         if is_terminal:
             self._end_episode(self.index)
