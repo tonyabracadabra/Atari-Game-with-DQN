@@ -443,6 +443,7 @@ class DQNAgent:
             env.reset()
             # Get the initial state
             curr_state = self.init_state
+            action = self.select_action(curr_state, is_training=False)
 
             is_terminal = False
 
@@ -463,4 +464,5 @@ class DQNAgent:
 
                 i += 1
             print str(num_episodes) + "th Episode Finished"
+            print "Run " + str(i) + " frames"
             num_episodes -= 1
