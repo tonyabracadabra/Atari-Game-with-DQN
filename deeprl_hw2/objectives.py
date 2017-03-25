@@ -4,7 +4,7 @@ import tensorflow as tf
 import semver
 
 
-def huber_loss(y_true, y_pred, max_grad=1.):
+def huber_loss(y_true, y_pred, max_grad=10.):
     """Calculate the huber loss.
 
     See https://en.wikipedia.org/wiki/Huber_loss
@@ -38,7 +38,7 @@ def huber_loss(y_true, y_pred, max_grad=1.):
 
     return result
     
-def mean_huber_loss(y_true, y_pred, max_grad=1.):
+def mean_huber_loss(y_true, y_pred, max_grad=10.):
     """Return mean huber loss.
 
     Same as huber_loss, but takes the mean over all values in the

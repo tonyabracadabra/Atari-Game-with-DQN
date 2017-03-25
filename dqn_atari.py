@@ -179,7 +179,7 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--network_name', default='linear_q_network', type=str, help='Type of model to use')
+    parser.add_argument('--network_name', default='deep_q_network_duel', type=str, help='Type of model to use')
     parser.add_argument('--window', default=4, type=int, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), type=tuple, help='new size')
     parser.add_argument('--batch_size', default=32, type=int, help='Batch size')
@@ -189,7 +189,7 @@ def main():  # noqa: D103
     parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, type=int, help='Frequency for copying weights to target network')
     parser.add_argument('--num_burn_in', default=50000, type=int, help='Number of prefilled samples in the replay buffer')
-    parser.add_argument('--num_iterations', default=4000000, type=int, help='Number of overal interactions to the environment')
+    parser.add_argument('--num_iterations', default=5000000, type=int, help='Number of overal interactions to the environment')
     parser.add_argument('--max_episode_length', default=200000, type=int, help='Terminate earlier for one episode')
     parser.add_argument('--train_freq', default=4, type=int, help='Frequency for training')
     parser.add_argument('--experience_replay', default=True, type=bool, help='Choose whether or not to use experience replay')
