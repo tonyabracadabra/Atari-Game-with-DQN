@@ -179,13 +179,13 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--network_name', default='deep_q_network_duel', type=str, help='Type of model to use')
+    parser.add_argument('--network_name', default='deep_q_network', type=str, help='Type of model to use')
     parser.add_argument('--window', default=4, type=int, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), type=tuple, help='new size')
     parser.add_argument('--batch_size', default=32, type=int, help='Batch size')
     parser.add_argument('--replay_buffer_size', default=750000, type=int, help='Replay buffer size')
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
-    parser.add_argument('--alpha', default=0.0002, type=float, help='Learning rate')
+    parser.add_argument('--alpha', default=0.00025, type=float, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, type=int,
                         help='Frequency for copying weights to target network')
