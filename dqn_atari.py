@@ -56,7 +56,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
     state = Input(shape=input_shape)
     model = None
 
-    if model_name == "deeq_q_network":
+    if model_name == "deep_q_network":
         print "Building " + model_name + " ..."
 
         # First convolutional layer
