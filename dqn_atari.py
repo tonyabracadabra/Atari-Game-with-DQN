@@ -185,18 +185,22 @@ def main():  # noqa: D103
     parser.add_argument('--batch_size', default=32, type=int, help='Batch size')
     parser.add_argument('--replay_buffer_size', default=750000, type=int, help='Replay buffer size')
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
-    parser.add_argument('--alpha', default=0.0001, type=float, help='Learning rate')
+    parser.add_argument('--alpha', default=0.0002, type=float, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--target_update_freq', default=10000, type=int, help='Frequency for copying weights to target network')
-    parser.add_argument('--num_burn_in', default=50000, type=int, help='Number of prefilled samples in the replay buffer')
-    parser.add_argument('--num_iterations', default=5000000, type=int, help='Number of overal interactions to the environment')
+    parser.add_argument('--target_update_freq', default=10000, type=int,
+                        help='Frequency for copying weights to target network')
+    parser.add_argument('--num_burn_in', default=50000, type=int,
+                        help='Number of prefilled samples in the replay buffer')
+    parser.add_argument('--num_iterations', default=5000000, type=int,
+                        help='Number of overal interactions to the environment')
     parser.add_argument('--max_episode_length', default=200000, type=int, help='Terminate earlier for one episode')
     parser.add_argument('--train_freq', default=4, type=int, help='Frequency for training')
-    parser.add_argument('--experience_replay', default=True, type=bool, help='Choose whether or not to use experience replay')
     parser.add_argument('--repetition_times', default=4, type=int, help='Parameter for action repetition')
     parser.add_argument('-o', '--output', default='atari-v0', type=str, help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
-    parser.add_argument('--train', default=False, type=bool, help='Train/Evaluate, set True if train the model')
+    parser.add_argument('--experience_replay', default=True, type=bool,
+                        help='Choose whether or not to use experience replay')
+    parser.add_argument('--train', default=True, type=bool, help='Train/Evaluate, set True if train the model')
     parser.add_argument('--model_path', default='atari-v0', type=str, help='specify model path to evaluation')
     parser.add_argument('--model_num', default=5000000, type=int, help='specify saved model number during train')
     parser.add_argument('--log_dir', default='log', type=str, help='specify log folder to save evaluate result')
