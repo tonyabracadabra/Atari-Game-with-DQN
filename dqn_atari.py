@@ -193,10 +193,10 @@ def main():  # noqa: D103
     parser.add_argument('--max_episode_length', default=200000, type=int, help='Terminate earlier for one episode')
     parser.add_argument('--train_freq', default=4, type=int, help='Frequency for training')
     parser.add_argument('--experience_replay', default=True, type=bool, help='Choose whether or not to use experience replay')
-    parser.add_argument('--repetition_times', default=3, type=int, help='Parameter for action repetition')
+    parser.add_argument('--repetition_times', default=4, type=int, help='Parameter for action repetition')
     parser.add_argument('-o', '--output', default='atari-v0', type=str, help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
-    parser.add_argument('--train', default=True, type=bool, help='Train/Evaluate, set True if train the model')
+    parser.add_argument('--train', default=False, type=bool, help='Train/Evaluate, set True if train the model')
     parser.add_argument('--model_path', default='atari-v0', type=str, help='specify model path to evaluation')
     parser.add_argument('--model_num', default=5000000, type=int, help='specify saved model number during train')
     parser.add_argument('--log_dir', default='log', type=str, help='specify log folder to save evaluate result')
@@ -238,7 +238,7 @@ def main():  # noqa: D103
         q_network_target.load_weights(model_dir + ".h5")
 
         with tf.Session() as sess:
-            dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policies, num_actions,
+            dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions,
                                  args.gamma, \
                                  args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
                                  args.experience_replay, args.repetition_times, args.network_name, args.env, sess)
