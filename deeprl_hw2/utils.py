@@ -4,7 +4,6 @@ import semver
 import tensorflow as tf
 import numpy as np
 
-
 def get_uninitialized_variables(variables=None):
     """Return a list of uninitialized tf variables.
 
@@ -38,7 +37,7 @@ def get_uninitialized_variables(variables=None):
 
     return [v for v, f in zip(variables, init_flag) if not f]
 
-
+# Tears of the debugging...
 def initialize_updates_operations(target_vars):
     # placeholders for updating the online network
     update_phs = [tf.placeholder(tf.float32, shape=var.get_shape()) for var in target_vars]
@@ -111,3 +110,4 @@ def get_init_state(env, preprocessor):
                                   [env.step(0)[0] for i in xrange(4)]), axis=2)
 
     return init_state
+
