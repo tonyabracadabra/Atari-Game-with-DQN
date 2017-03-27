@@ -56,7 +56,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
     state = Input(shape=input_shape)
     model = None
 
-    if model_name == "deeq_q_network":
+    if model_name == "deep_q_network":
         print "Building " + model_name + " ..."
 
         # First convolutional layer
@@ -179,23 +179,27 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--network_name', default='linear_q_network', type=str, help='Type of model to use')
+    parser.add_argument('--network_name', default='deep_q_network', type=str, help='Type of model to use')
     parser.add_argument('--window', default=4, type=int, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), type=tuple, help='new size')
     parser.add_argument('--batch_size', default=32, type=int, help='Batch size')
     parser.add_argument('--replay_buffer_size', default=750000, type=int, help='Replay buffer size')
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
-    parser.add_argument('--alpha', default=0.0001, type=float, help='Learning rate')
+    parser.add_argument('--alpha', default=0.00025, type=float, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
-    parser.add_argument('--target_update_freq', default=10000, type=int, help='Frequency for copying weights to target network')
-    parser.add_argument('--num_burn_in', default=50000, type=int, help='Number of prefilled samples in the replay buffer')
-    parser.add_argument('--num_iterations', default=4000000, type=int, help='Number of overal interactions to the environment')
+    parser.add_argument('--target_update_freq', default=10000, type=int,
+                        help='Frequency for copying weights to target network')
+    parser.add_argument('--num_burn_in', default=50000, type=int,
+                        help='Number of prefilled samples in the replay buffer')
+    parser.add_argument('--num_iterations', default=5000000, type=int,
+                        help='Number of overal interactions to the environment')
     parser.add_argument('--max_episode_length', default=200000, type=int, help='Terminate earlier for one episode')
     parser.add_argument('--train_freq', default=4, type=int, help='Frequency for training')
-    parser.add_argument('--experience_replay', default=True, type=bool, help='Choose whether or not to use experience replay')
-    parser.add_argument('--repetition_times', default=3, type=int, help='Parameter for action repetition')
+    parser.add_argument('--repetition_times', default=4, type=int, help='Parameter for action repetition')
     parser.add_argument('-o', '--output', default='atari-v0', type=str, help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
+    parser.add_argument('--experience_replay', default=True, type=bool,
+                        help='Choose whether or not to use experience replay')
     parser.add_argument('--train', default=True, type=bool, help='Train/Evaluate, set True if train the model')
     parser.add_argument('--model_path', default='atari-v0', type=str, help='specify model path to evaluation')
     parser.add_argument('--model_num', default=5000000, type=int, help='specify saved model number during train')
@@ -238,7 +242,7 @@ def main():  # noqa: D103
         q_network_target.load_weights(model_dir + ".h5")
 
         with tf.Session() as sess:
-            dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policies, num_actions,
+            dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions,
                                  args.gamma, \
                                  args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
                                  args.experience_replay, args.repetition_times, args.network_name, args.env, sess)

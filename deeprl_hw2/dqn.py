@@ -437,6 +437,8 @@ class DQNAgent:
         init = tf.global_variables_initializer()
         self.sess.run(init)
 
+        self.init_state = get_init_state(env, self.preprocessor)
+
         env = wrappers.Monitor(env, log_file)
 
         while num_episodes > 0:
