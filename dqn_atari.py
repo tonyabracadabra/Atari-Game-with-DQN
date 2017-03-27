@@ -111,8 +111,8 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
         x = Flatten()(x)
         # value output
         x = Dense(512)(x)
-        x = Activation('relu')(x)
-        y_val = Dense(1)(x)
+        x_val = Activation('relu')(x)
+        y_val = Dense(1)(x_val)
 
         # advantage output
         x_advantage = Dense(512)(x)
@@ -189,7 +189,7 @@ def main():  # noqa: D103
     parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, type=int,
                         help='Frequency for copying weights to target network')
-    parser.add_argument('--num_burn_in', default=50000, type=int,
+    parser.add_argument('--num_burn_in', default=1000, type=int,
                         help='Number of prefilled samples in the replay buffer')
     parser.add_argument('--num_iterations', default=5000000, type=int,
                         help='Number of overal interactions to the environment')
