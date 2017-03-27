@@ -121,7 +121,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
         # mean advantage
         y_advantage_mean = Lambda(lambda x: K.mean(x, axis=1, keepdims=True))(y_advantage)
 
-        y_q = Lambda(lambda x: x[0] + x[1] + x[2])([y_val, y_advantage, y_advantage_mean])
+        y_q = Lambda(lambda x: x[0] + x[1] - x[2])([y_val, y_advantage, y_advantage_mean])
 
         model = Model(input=state, output=y_q)
 

@@ -223,6 +223,7 @@ class ReplayMemory:
         self.prev_terminal = True
 
     def append(self, next_frame, action, reward, is_terminal):
+        # Maximizing over the previous frame
         if self.prev_terminal:
             new_frame = np.maximum(next_frame, self.prev_frame)
             sample = Sample(new_frame, action, reward)
