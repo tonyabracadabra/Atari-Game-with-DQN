@@ -62,6 +62,7 @@ class DQNAgent:
                  experience_replay,
                  repetition_times,
                  network_name,
+                 max_grad,
                  env_name,
                  sess):
 
@@ -89,6 +90,7 @@ class DQNAgent:
         self.experience_replay = experience_replay
         self.repetition_times = repetition_times
         self.network_name = network_name
+        self.max_grad = max_grad
         self.env_name = env_name
         self.sess = sess
 
@@ -123,7 +125,7 @@ class DQNAgent:
             # the output of the q_network is y_pred
             self.y_pred = tf.reduce_sum(tf.multiply(self.q_values_online, self.action_one_hot), axis=1)
 
-            self.loss = loss_func(self.y_true, self.y_pred)
+            self.loss = loss_func(self.y_true, self.y_pred, self.max_grad)
 
             self.optimizer = optimizer.minimize(self.loss)
 
@@ -290,14 +292,14 @@ class DQNAgent:
 
             print "Start " + str(episode_count) + "th Episode ..."
             for j in xrange(max_episode_length):
-                # if iter_t % save_freq == 0:
-                #     self.evaluate_no_render()
-                #     model_json = self.q_network_online.to_json()
-                #     with open(output_folder + str(iter_t) + ".json", "w") as json_file:
-                #         json_file.write(model_json)
-                #         # serialize weights to HDF5
-                #         self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
-                #     print("Saved model to disk")
+                if iter_t % save_freq == 0:
+                    self.evaluate_no_render()
+                    model_json = self.q_network_online.to_json()
+                    with open(output_folder + str(iter_t) + ".json", "w") as json_file:
+                        json_file.write(model_json)
+                        # serialize weights to HDF5
+                        self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
+                    print("Saved model to disk")
 
                 iter_t += 1
                 if action_count == self.repetition_times:

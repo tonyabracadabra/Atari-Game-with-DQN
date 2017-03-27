@@ -189,7 +189,7 @@ def main():  # noqa: D103
     parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, type=int,
                         help='Frequency for copying weights to target network')
-    parser.add_argument('--num_burn_in', default=1000, type=int,
+    parser.add_argument('--num_burn_in', default=50000, type=int,
                         help='Number of prefilled samples in the replay buffer')
     parser.add_argument('--num_iterations', default=5000000, type=int,
                         help='Number of overal interactions to the environment')
@@ -202,6 +202,7 @@ def main():  # noqa: D103
                         help='Choose whether or not to use experience replay')
     parser.add_argument('--train', default=True, type=bool, help='Train/Evaluate, set True if train the model')
     parser.add_argument('--model_path', default='atari-v0', type=str, help='specify model path to evaluation')
+    parser.add_argument('--max_grad', default=1.0, type=float, help='Parameter for huber loss')
     parser.add_argument('--model_num', default=5000000, type=int, help='specify saved model number during train')
     parser.add_argument('--log_dir', default='log', type=str, help='specify log folder to save evaluate result')
     parser.add_argument('--eval_num', default=100, type=int, help='number of evaluation to run')
@@ -243,9 +244,8 @@ def main():  # noqa: D103
 
         with tf.Session() as sess:
             dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions,
-                                 args.gamma, \
-                                 args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
-                                 args.experience_replay, args.repetition_times, args.network_name, args.env, sess)
+                                 args.gamma, args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
+                                 args.experience_replay, args.repetition_times, args.network_name, args.max_grad, args.env, sess)
 
             dqn_agent.evaluate(env, log_file, args.eval_num)
         exit(0)
@@ -259,9 +259,8 @@ def main():  # noqa: D103
 
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions,
-                             args.gamma, \
-                             args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
-                             args.experience_replay, args.repetition_times, args.network_name, args.env, sess)
+                             args.gamma, args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
+                             args.experience_replay, args.repetition_times, args.network_name, args.max_grad, args.env, sess)
 
         optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)
