@@ -4,6 +4,7 @@ import semver
 import tensorflow as tf
 import numpy as np
 
+
 def get_uninitialized_variables(variables=None):
     """Return a list of uninitialized tf variables.
 
@@ -37,13 +38,14 @@ def get_uninitialized_variables(variables=None):
 
     return [v for v, f in zip(variables, init_flag) if not f]
 
+
 # Tears of the debugging...
 def initialize_updates_operations(target_vars):
     # placeholders for updating the online network
     update_phs = [tf.placeholder(tf.float32, shape=var.get_shape()) for var in target_vars]
     # update operations
     update_ops = [update_pair[0].assign(update_pair[1]) \
-                      for update_pair in zip(target_vars, update_phs)]
+                  for update_pair in zip(target_vars, update_phs)]
 
     return update_phs, update_ops
 
@@ -100,14 +102,14 @@ def get_hard_target_model_updates(target, source):
     list(tf.Tensor)
       List of tensor update ops.
     """
+    # updating the parameters from the previous network
+    target.set_weights(source.get_weights())
 
-    return source.get_weights()
 
 def get_init_state(env, preprocessor):
     env.reset()
-    
+
     init_state = np.stack(map(preprocessor.process_state_for_network, \
-                                  [env.step(0)[0] for i in xrange(4)]), axis=2)
+                              [env.step(0)[0] for i in xrange(4)]), axis=2)
 
     return init_state
-

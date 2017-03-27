@@ -159,12 +159,17 @@ class LinearDecayGreedyEpsilonPolicy(Policy):
         Any:
           Selected action.
         """
+        rand = random.random()
+        if not is_training:
+            if rand < self.start_value:
+                return random.randint(0, len(q_values) - 1)
+            else:
+                return np.argmax(q_values)
 
-        if self.curr_steps < self.num_steps and is_training:
+        if self.curr_steps < self.num_steps:
             self.curr_steps += 1
             self.epsilon += self.decrement
 
-        rand = random.random()
         if rand < self.epsilon:
             return random.randint(0, len(q_values) - 1)
         else:

@@ -327,9 +327,7 @@ class DQNAgent:
 
                 # Time for updating (copy...) the target network
                 if iter_t % self.target_update_freq == 0:
-                    weights = get_hard_target_model_updates(self.q_network_target, self.q_network_online)
-                    # updating the parameters from the previous network
-                    self.q_network_target.set_weights(weights)
+                    get_hard_target_model_updates(self.q_network_target, self.q_network_online)
 
                 if iter_t % self.train_freq == 0:
                     loss_val = self.update_policy()
