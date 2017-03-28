@@ -68,7 +68,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
         # flatten the tensor
         x = Flatten()(x)
         x = Dense(256)(x)
-        x = Activation('relu')(x)
+        # x = Activation('relu')(x)
         # output layer
         y_pred = Dense(num_actions)(x)
 
@@ -89,7 +89,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
         # flatten the tensor
         x = Flatten()(x)
         x = Dense(512)(x)
-        x = Activation('relu')(x)
+        # x = Activation('relu')(x)
         # output layer
         y_pred = Dense(num_actions)(x)
 
@@ -109,14 +109,15 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
         x = Activation('relu')(x)
 
         x = Flatten()(x)
+        x = Activation('relu')(x)
         # value output
-        x = Dense(512)(x)
-        x_val = Activation('relu')(x)
+        x_val = Dense(512)(x)
+        # x_val = Activation('relu')(x_val)
         y_val = Dense(1)(x_val)
 
         # advantage output
         x_advantage = Dense(512)(x)
-        x_advantage = Activation('relu')(x_advantage)
+        # x_advantage = Activation('relu')(x_advantage)
         y_advantage = Dense(num_actions)(x_advantage)
         # mean advantage
         y_advantage_mean = Lambda(lambda x: K.mean(x, axis=1, keepdims=True))(y_advantage)
@@ -185,7 +186,7 @@ def main():  # noqa: D103
     parser.add_argument('--batch_size', default=32, type=int, help='Batch size')
     parser.add_argument('--replay_buffer_size', default=750000, type=int, help='Replay buffer size')
     parser.add_argument('--gamma', default=0.99, type=float, help='Discount factor')
-    parser.add_argument('--alpha', default=0.00015, type=float, help='Learning rate')
+    parser.add_argument('--alpha', default=0.0001, type=float, help='Learning rate')
     parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, type=int,
                         help='Frequency for copying weights to target network')
