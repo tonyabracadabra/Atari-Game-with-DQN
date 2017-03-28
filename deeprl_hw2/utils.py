@@ -110,6 +110,6 @@ def get_init_state(env, preprocessor):
     env.reset()
 
     init_state = np.stack(map(preprocessor.process_state_for_network, \
-                              [env.step(0)[0] for i in xrange(4)]), axis=2)
+                              [env.step(0)[0] for _ in xrange(4)]), axis=2)
 
     return init_state

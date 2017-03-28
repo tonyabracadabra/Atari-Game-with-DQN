@@ -23,7 +23,7 @@ import gym
 import keras.backend as K
 
 
-def create_model(window, input_shape, num_actions, model_name='deep_q_network'):  # noqa: D103
+def create_model(window, input_shape, num_actions, model_name='deep_q_network', trainable=True):  # noqa: D103
     """Create the Deep-Q-network model.
 
     Use Keras to construct a keras.models.Model instance (you can also
@@ -60,17 +60,17 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
         print "Building " + model_name + " ..."
 
         # First convolutional layer
-        x = Conv2D(filters=16, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
+        x = Conv2D(filters=16, kernel_size=(8, 8), strides=(4, 4), padding='valid', trainable=trainable)(state)
         x = Activation('relu')(x)
         # Second convolutional layer
-        x = Conv2D(filters=32, kernel_size=(4, 4), strides=(2, 2), padding='valid')(x)
+        x = Conv2D(filters=32, kernel_size=(4, 4), strides=(2, 2), padding='valid', trainable=trainable)(x)
         x = Activation('relu')(x)
         # flatten the tensor
         x = Flatten()(x)
-        x = Dense(256)(x)
+        x = Dense(256, trainable=trainable)(x)
         # x = Activation('relu')(x)
         # output layer
-        y_pred = Dense(num_actions)(x)
+        y_pred = Dense(num_actions, trainable=trainable)(x)
 
         model = Model(input=state, output=y_pred)
 
@@ -78,20 +78,20 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
         print "Building " + model_name + " ..."
 
         # First convolutional layer
-        x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
+        x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid', trainable=trainable)(state)
         x = Activation('relu')(x)
         # Second convolutional layer
-        x = Conv2D(filters=64, kernel_size=(4, 4), strides=(2, 2), padding='valid')(x)
+        x = Conv2D(filters=64, kernel_size=(4, 4), strides=(2, 2), padding='valid', trainable=trainable)(x)
         x = Activation('relu')(x)
         # Third convolutional layer
-        x = Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid')(x)
+        x = Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid', trainable=trainable)(x)
         x = Activation('relu')(x)
         # flatten the tensor
         x = Flatten()(x)
-        x = Dense(512)(x)
+        x = Dense(512, trainable=trainable)(x)
         # x = Activation('relu')(x)
         # output layer
-        y_pred = Dense(num_actions)(x)
+        y_pred = Dense(num_actions, trainable=trainable)(x)
 
         model = Model(input=state, output=y_pred)
 
@@ -99,25 +99,25 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
         print "Building " + model_name + " ..."
 
         # First convolutional layer
-        x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid')(state)
+        x = Conv2D(filters=32, kernel_size=(8, 8), strides=(4, 4), padding='valid', trainable=trainable)(state)
         x = Activation('relu')(x)
         # Second convolutional layer
-        x = Conv2D(filters=64, kernel_size=(4, 4), strides=(2, 2), padding='valid')(x)
+        x = Conv2D(filters=64, kernel_size=(4, 4), strides=(2, 2), padding='valid', trainable=trainable)(x)
         x = Activation('relu')(x)
         # Third convolutional layer
-        x = Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid')(x)
+        x = Conv2D(filters=64, kernel_size=(3, 3), strides=(1, 1), padding='valid', trainable=trainable)(x)
         x = Activation('relu')(x)
 
         x = Flatten()(x)
         # value output
-        x_val = Dense(512)(x)
+        x_val = Dense(512, trainable=trainable)(x)
         # x_val = Activation('relu')(x_val)
-        y_val = Dense(1)(x_val)
+        y_val = Dense(1, trainable=trainable)(x_val)
 
         # advantage output
-        x_advantage = Dense(512)(x)
+        x_advantage = Dense(512, trainable=trainable)(x)
         # x_advantage = Activation('relu')(x_advantage)
-        y_advantage = Dense(num_actions)(x_advantage)
+        y_advantage = Dense(num_actions, trainable=trainable)(x_advantage)
         # mean advantage
         y_advantage_mean = Lambda(lambda x: K.mean(x, axis=1, keepdims=True))(y_advantage)
 
@@ -128,12 +128,13 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
     elif model_name == "linear_q_network" or model_name == "linear_q_network_double":
 
         x = Flatten()(state)
-        x = Dense(256)(x)
-        y_pred = Dense(num_actions)(x)
+        x = Dense(256, trainable=trainable)(x)
+        y_pred = Dense(num_actions, trainable=trainable)(x)
         model = Model(output=y_pred, input=state)
     else:
         print "Model not supported"
         exit(1)
+
     return model
 
 
@@ -187,13 +188,13 @@ def main():  # noqa: D103
     parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, type=int,
                         help='Frequency for copying weights to target network')
-    parser.add_argument('--num_burn_in', default=50000, type=int,
+    parser.add_argument('--num_burn_in', default=500, type=int,
                         help='Number of prefilled samples in the replay buffer')
     parser.add_argument('--num_iterations', default=5000000, type=int,
                         help='Number of overal interactions to the environment')
     parser.add_argument('--max_episode_length', default=200000, type=int, help='Terminate earlier for one episode')
     parser.add_argument('--train_freq', default=4, type=int, help='Frequency for training')
-    parser.add_argument('--repetition_times', default=4, type=int, help='Parameter for action repetition')
+    parser.add_argument('--repetition_times', default=3, type=int, help='Parameter for action repetition')
     parser.add_argument('-o', '--output', default='atari-v0', type=str, help='Directory to save data to')
     parser.add_argument('--seed', default=0, type=int, help='Random seed')
     parser.add_argument('--experience_replay', default=True, type=bool,
@@ -249,8 +250,8 @@ def main():  # noqa: D103
         exit(0)
 
     '''Train the model'''
-    q_network_online = create_model(args.window, args.new_size, num_actions, args.network_name)
-    q_network_target = create_model(args.window, args.new_size, num_actions, args.network_name)
+    q_network_online = create_model(args.window, args.new_size, num_actions, args.network_name, True)
+    q_network_target = create_model(args.window, args.new_size, num_actions, args.network_name, False)
 
     # create output dir, meant to pop up error when dir exist to avoid over written
     os.mkdir(args.output + "/" + args.network_name)
