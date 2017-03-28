@@ -37,7 +37,8 @@ def huber_loss(y_true, y_pred, max_grad=1.):
     result = tf.concat([less, greater], axis=0)
 
     return result
-    
+
+
 def mean_huber_loss(y_true, y_pred, max_grad=1.):
     """Return mean huber loss.
 

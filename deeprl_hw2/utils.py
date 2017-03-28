@@ -81,7 +81,7 @@ def get_soft_target_model_updates(target, source, tau):
     weights = map(lambda (x, y): x + y, zip(map(lambda w: (1 - tau) * w, target.get_weights()), \
                                             map(lambda w: tau * w, source.get_weights())))
 
-    return weights
+    target.set_weights(weights)
 
 
 def get_hard_target_model_updates(target, source):

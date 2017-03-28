@@ -2,10 +2,10 @@
 
 import numpy as np
 from PIL import Image
-
+from sklearn.preprocessing import scale
 from deeprl_hw2 import utils
 from deeprl_hw2.core import Preprocessor
-
+import matplotlib.pyplot as plt
 
 class HistoryPreprocessor(Preprocessor):
     """Keeps the last k states.
@@ -106,8 +106,8 @@ class AtariPreprocessor(Preprocessor):
         outputs float32 images.
         """
         uint8_img = self.process_state_for_memory(state)
-
-        return uint8_img.astype('float32')
+        float_img = uint8_img / 255.0
+        return float_img
 
     def process_batch(self, samples):
         """The batches from replay memory will be uint8, convert to float32.
