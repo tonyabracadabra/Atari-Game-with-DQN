@@ -188,7 +188,7 @@ def main():  # noqa: D103
     parser.add_argument('--epsilon', default=0.05, type=float, help='Exploration probability for epsilon-greedy')
     parser.add_argument('--target_update_freq', default=10000, type=int,
                         help='Frequency for copying weights to target network')
-    parser.add_argument('--num_burn_in', default=500, type=int,
+    parser.add_argument('--num_burn_in', default=50000, type=int,
                         help='Number of prefilled samples in the replay buffer')
     parser.add_argument('--num_iterations', default=5000000, type=int,
                         help='Number of overal interactions to the environment')
