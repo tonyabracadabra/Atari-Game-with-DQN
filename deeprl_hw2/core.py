@@ -245,7 +245,6 @@ class ReplayMemory:
 
         self.index = (self.index + 1) % self.max_size
 
-
     def _end_episode(self, final_index):
         self._terminal.add(final_index)
 

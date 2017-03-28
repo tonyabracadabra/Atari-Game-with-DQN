@@ -166,6 +166,26 @@ class DQNAgent:
 
         return self.policy.select_action(q_values_val, is_training)
 
+    def _calc_y(self, next_states, rewards, not_terminal):
+        y_vals = rewards
+        # Calculating y values for q_network double
+        if self.network_name is "deep_q_network_double" or self.network_name is "linear_q_network_double":
+            actions = np.argmax(self.sess.run(self.q_values_online, \
+                                              feed_dict={self.state_online: next_states}), axis=1)
+
+            q_vals = self.gamma * self.sess.run(self.q_values_target, \
+                                                feed_dict={self.state_target: next_states})
+
+            added_vals = q_vals[np.arange(self.batch_size), actions]
+        else:
+            # Calculating y values for q_network_deep and q_network_duel
+            added_vals = self.gamma * np.max(self.sess.run(self.q_values_target, \
+                                                           feed_dict={self.state_target: next_states}), axis=1)
+
+        y_vals[not_terminal] += added_vals[not_terminal]
+
+        return y_vals
+
     def update_policy(self):
         """Update your policy.
 
@@ -198,6 +218,28 @@ class DQNAgent:
                                     feed_dict={self.state_online: states, self.y_true: y_vals, self.action: actions})
 
         return loss_val
+
+    def _append_to_memory(self, curr_state, action, next_frame, reward, is_terminal):
+
+        # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
+        next_frame = self.preprocessor.process_state_for_memory(next_frame)
+
+        # Remove flickering effect
+        # next_frame = np.maximum(curr_state[:, :, -1], next_frame)
+        next_state = np.expand_dims(next_frame, axis=2)
+        # append the next state to the last 3 frames in currstate to form the new state
+        next_state = np.append(curr_state[:, :, 1:], next_state, axis=2)
+
+        if self.experience_replay:
+            self.memory.append(next_frame, action, self.preprocessor.process_reward(reward), is_terminal)
+        else:
+            self.update_pool['states'].append(curr_state)
+            self.update_pool['next_states'].append(next_state)
+            self.update_pool['rewards'].append(reward)
+            self.update_pool['actions'].append(action)
+            self.update_pool['not_terminal'].append(not is_terminal)
+
+        return next_state
 
     def fit(self, env, num_iterations, output_folder, save_freq=10000, max_episode_length=100, train_freq=50):
         """Fit your model to the provided environment.
@@ -339,48 +381,6 @@ class DQNAgent:
             # update again after the episode ends...
             loss_val = self.update_policy()
             print str(episode_count) + "th Episode:\n" + "Reward: " + str(total_reward) + "\n Loss:" + str(loss_val)
-
-    def _calc_y(self, next_states, rewards, not_terminal):
-        y_vals = rewards
-        # Calculating y values for q_network double
-        if self.network_name is "deep_q_network_double" or self.network_name is "linear_q_network_double":
-            actions = np.argmax(self.sess.run(self.q_values_online, \
-                                              feed_dict={self.state_online: next_states}), axis=1)
-
-            q_vals = self.gamma * self.sess.run(self.q_values_target, \
-                                                feed_dict={self.state_target: next_states})
-
-            added_vals = q_vals[np.arange(self.batch_size), actions]
-        else:
-            # Calculating y values for q_network_deep and q_network_duel
-            added_vals = self.gamma * np.max(self.sess.run(self.q_values_target, \
-                                                           feed_dict={self.state_target: next_states}), axis=1)
-
-        y_vals[not_terminal] += added_vals[not_terminal]
-
-        return y_vals
-
-    def _append_to_memory(self, curr_state, action, next_frame, reward, is_terminal):
-
-        # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
-        next_frame = self.preprocessor.process_state_for_memory(next_frame)
-
-        # Remove flickering effect
-        # next_frame = np.maximum(curr_state[:, :, -1], next_frame)
-        next_state = np.expand_dims(next_frame, axis=2)
-        # append the next state to the last 3 frames in currstate to form the new state
-        next_state = np.append(curr_state[:, :, 1:], next_state, axis=2)
-
-        if self.experience_replay:
-            self.memory.append(next_frame, action, self.preprocessor.process_reward(reward), is_terminal)
-        else:
-            self.update_pool['states'].append(curr_state)
-            self.update_pool['next_states'].append(next_state)
-            self.update_pool['rewards'].append(reward)
-            self.update_pool['actions'].append(action)
-            self.update_pool['not_terminal'].append(not is_terminal)
-
-        return next_state
 
     def evaluate_no_render(self):
         num_episodes = 0
