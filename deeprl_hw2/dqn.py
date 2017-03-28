@@ -203,7 +203,7 @@ class DQNAgent:
         """
 
         if self.experience_replay:
-            states, next_states, actions, rewards, not_terminal = self.memory.sample(self.batch_size)
+            states, next_states, actions, rewards, not_terminal = self.memory.sample(self.batch_size, self.preprocessor)
         else:
             states = np.stack(self.update_pool['states'])
             next_states = np.stack(self.update_pool['next_states'])
@@ -221,14 +221,15 @@ class DQNAgent:
 
     def _append_to_memory(self, curr_state, action, next_frame, reward, is_terminal):
 
-        # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
-        next_frame = self.preprocessor.process_state_for_memory(next_frame)
-
-        # Remove flickering effect
-        # next_frame = np.maximum(curr_state[:, :, -1], next_frame)
-        next_state = np.expand_dims(next_frame, axis=2)
+        next_state = np.expand_dims(self.preprocessor.process_state_for_network(next_frame), axis=2)
+        # plt.imshow(self.preprocessor.process_state_for_network(next_frame))
+        # print self.preprocessor.process_state_for_network(next_frame)
+        # plt.show()
         # append the next state to the last 3 frames in currstate to form the new state
         next_state = np.append(curr_state[:, :, 1:], next_state, axis=2)
+
+        # Set s_{t+1} = s_t, a_t, x_{t+1} and preprocess phi_{t+1} = phi(s_{t+1})
+        next_frame = self.preprocessor.process_state_for_memory(next_frame)
 
         if self.experience_replay:
             self.memory.append(next_frame, action, self.preprocessor.process_reward(reward), is_terminal)

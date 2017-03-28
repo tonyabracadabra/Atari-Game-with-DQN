@@ -257,7 +257,7 @@ class ReplayMemory:
                (x + 2 % self.max_size not in self._terminal) and \
                (x + 3 % self.max_size not in self._terminal)
 
-    def sample(self, batch_size, indexes=None):
+    def sample(self, batch_size, index=None):
         random_indexes = set()
         while len(random_indexes) < batch_size:
             new_random_indexes = random.sample(xrange(len(self._samples) - 4), batch_size - len(random_indexes))
@@ -271,8 +271,8 @@ class ReplayMemory:
             not_terminal.append(False if i + 4 % self.max_size in self._terminal else True)
 
         # print [len([i.frame for i in samples]) for samples in random_samples]
-        states = np.stack([np.stack([s.frame for s in samples[:4]], axis=2) for samples in random_samples])
-        next_states = np.stack([np.stack([s.frame for s in samples[1:]], axis=2) for samples in random_samples])
+        states = np.stack([np.stack([s.frame / 255.0 for s in samples[:4]], axis=2) for samples in random_samples])
+        next_states = np.stack([np.stack([s.frame / 255.0 for s in samples[1:]], axis=2) for samples in random_samples])
         actions = np.stack([s[-1].action for s in random_samples])
         rewards = np.stack([s[-1].reward for s in random_samples])
 
