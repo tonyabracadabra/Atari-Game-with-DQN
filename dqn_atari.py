@@ -109,7 +109,6 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
         x = Activation('relu')(x)
 
         x = Flatten()(x)
-        x = Activation('relu')(x)
         # value output
         x_val = Dense(512)(x)
         # x_val = Activation('relu')(x_val)
