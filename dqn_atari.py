@@ -129,9 +129,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network'):
 
         x = Flatten()(state)
         x = Dense(256)(x)
-
         y_pred = Dense(num_actions)(x)
-
         model = Model(output=y_pred, input=state)
     else:
         print "Model not supported"
