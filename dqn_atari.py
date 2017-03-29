@@ -67,6 +67,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network', 
         x = Activation('relu')(x)
         # flatten the tensor
         x = Flatten()(x)
+        x = Activation('relu')(x)
         x = Dense(256, trainable=trainable)(x)
         # x = Activation('relu')(x)
         # output layer
@@ -88,6 +89,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network', 
         x = Activation('relu')(x)
         # flatten the tensor
         x = Flatten()(x)
+        x = Activation('relu')(x)
         x = Dense(512, trainable=trainable)(x)
         # x = Activation('relu')(x)
         # output layer
@@ -109,6 +111,7 @@ def create_model(window, input_shape, num_actions, model_name='deep_q_network', 
         x = Activation('relu')(x)
 
         x = Flatten()(x)
+        x = Activation('relu')(x)
         # value output
         x_val = Dense(512, trainable=trainable)(x)
         # x_val = Activation('relu')(x_val)
@@ -201,7 +204,7 @@ def main():  # noqa: D103
                         help='Choose whether or not to use experience replay')
     parser.add_argument('--train', default=True, type=bool, help='Train/Evaluate, set True if train the model')
     parser.add_argument('--model_path', default='atari-v0', type=str, help='specify model path to evaluation')
-    parser.add_argument('--max_grad', default=10.0, type=float, help='Parameter for huber loss')
+    parser.add_argument('--max_grad', default=1.0, type=float, help='Parameter for huber loss')
     parser.add_argument('--model_num', default=5000000, type=int, help='specify saved model number during train')
     parser.add_argument('--log_dir', default='log', type=str, help='specify log folder to save evaluate result')
     parser.add_argument('--eval_num', default=100, type=int, help='number of evaluation to run')
