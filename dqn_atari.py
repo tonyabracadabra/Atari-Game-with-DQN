@@ -235,16 +235,21 @@ def main():  # noqa: D103
         # specific log file to save result
         log_file = args.log_dir + '/' + args.network_name + '/' + str(args.model_num)
         model_dir = args.model_path + '/' + args.network_name + '/' + str(args.model_num)
-        # load model
-        with open(model_dir + ".json", 'r') as json_file:
-            loaded_model_json = json_file.read()
-            q_network_online = model_from_json(loaded_model_json)
-            q_network_target = model_from_json(loaded_model_json)
-        # load weights into model
-        q_network_online.load_weights(model_dir + ".h5")
-        q_network_target.load_weights(model_dir + ".h5")
-
+        
+        
         with tf.Session() as sess:
+            # load model
+            with open(model_dir + ".json", 'r') as json_file:
+                loaded_model_json = json_file.read()
+                q_network_online = model_from_json(loaded_model_json)
+                q_network_target = model_from_json(loaded_model_json)
+            
+            sess.run(tf.global_variables_initializer())
+
+            # load weights into model
+            q_network_online.load_weights(model_dir + ".h5")
+            q_network_target.load_weights(model_dir + ".h5")
+            
             dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions,
                                  args.gamma, args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
                                  args.experience_replay, args.repetition_times, args.network_name, args.max_grad, args.env, sess)
