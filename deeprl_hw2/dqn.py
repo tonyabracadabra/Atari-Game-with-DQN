@@ -336,10 +336,10 @@ class DQNAgent:
                 if iter_t % save_freq == 0:
                     self.evaluate_no_render()
                     model_json = self.q_network_online.to_json()
-                    with open(output_folder + str(iter_t) + ".json", "w") as json_file:
+                    with open(os.path.join(output_folder, str(iter_t), ".json"), "w") as json_file:
                         json_file.write(model_json)
                         # serialize weights to HDF5
-                        self.q_network_online.save_weights(output_folder + str(iter_t) + ".h5")
+                        self.q_network_online.save_weights(os.path.join(output_folder, str(iter_t), ".h5"))
                     print("Saved model to disk")
 
                 iter_t += 1
@@ -417,7 +417,7 @@ class DQNAgent:
 
         print "Average reward: " + str(reward_avg)
 
-    def evaluate(self, env, log_file, num_episodes, max_episode_length=None):
+    def evaluate(self, env, log_file, num_episodes, render=False):
         """Test your agent with a provided environment.
         
         You shouldn't update your network parameters here. Also if you
@@ -431,29 +431,29 @@ class DQNAgent:
         visually inspect your policy.
         """
 
-        # Parameter for action repetition
-        init = tf.global_variables_initializer()
-        self.sess.run(init)
-
+        # initialize
         self.init_state = get_init_state(env, self.preprocessor)
-
         env = wrappers.Monitor(env, log_file)
+        rewards = []
 
         while num_episodes > 0:
             env.reset()
             # Get the initial state
             curr_state = self.init_state
             action = self.select_action(curr_state, is_training=False)
-
             is_terminal = False
-
             i = 0
+            curr_reward = 0
+
             while not is_terminal:
-                env.render()
+                if render:
+                    env.render()
                 if i % self.repetition_times == 0:
                     action = self.select_action(curr_state, is_training=False)
 
+                # take a step
                 next_frame, reward, is_terminal, _ = env.step(action)
+                curr_reward += reward
 
                 # process and generate next state
                 next_frame = self.preprocessor.process_state_for_network(next_frame)
@@ -463,6 +463,11 @@ class DQNAgent:
                 curr_state = next_state
 
                 i += 1
-            print str(num_episodes) + "th Episode Finished"
-            print "Run " + str(i) + " frames"
+            rewards.append(curr_reward)
+            print "{}th Episode Finished".format(num_episodes)
             num_episodes -= 1
+
+        print "\nStatistics:"
+        print "Mean: {}".format(np.mean(rewards))
+        print "Standard deviation: {}".format(np.std(rewards))
+

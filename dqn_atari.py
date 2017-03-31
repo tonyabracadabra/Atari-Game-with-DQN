@@ -181,7 +181,7 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--network_name', default='deep_q_network_duel', type=str, help='Type of model to use')
+    parser.add_argument('--network_name', default='linear_q_network_double', type=str, help='Type of model to use')
     parser.add_argument('--window', default=4, type=int, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), type=tuple, help='new size')
     parser.add_argument('--batch_size', default=32, type=int, help='Batch size')
@@ -199,13 +199,14 @@ def main():  # noqa: D103
     parser.add_argument('--train_freq', default=4, type=int, help='Frequency for training')
     parser.add_argument('--repetition_times', default=3, type=int, help='Parameter for action repetition')
     parser.add_argument('-o', '--output', default='atari-v0', type=str, help='Directory to save data to')
-    parser.add_argument('--seed', default=0, type=int, help='Random seed')
+    parser.add_argument('--seed', default=1, type=int, help='Random seed')
     parser.add_argument('--experience_replay', default=True, type=bool,
                         help='Choose whether or not to use experience replay')
-    parser.add_argument('--train', default=True, type=bool, help='Train/Evaluate, set True if train the model')
-    parser.add_argument('--model_path', default='atari-v0', type=str, help='specify model path to evaluation')
+    parser.add_argument('--train', default=False, type=bool, help='Train/Evaluate, set True if train the model')
+    parser.add_argument('--model_path', default='/media/hongbao/Study/Courses/10703/hw2/dlqn',
+                        type=str, help='specify model path to evaluation')
     parser.add_argument('--max_grad', default=1.0, type=float, help='Parameter for huber loss')
-    parser.add_argument('--model_num', default=5000000, type=int, help='specify saved model number during train')
+    parser.add_argument('--model_num', default=3000000, type=int, help='specify saved model number during train')
     parser.add_argument('--log_dir', default='log', type=str, help='specify log folder to save evaluate result')
     parser.add_argument('--eval_num', default=100, type=int, help='number of evaluation to run')
     parser.add_argument('--save_freq', default=100000, type=int, help='model save frequency')
@@ -233,26 +234,27 @@ def main():  # noqa: D103
             exit(1)
 
         # specific log file to save result
-        log_file = args.log_dir + '/' + args.network_name + '/' + str(args.model_num)
-        model_dir = args.model_path + '/' + args.network_name + '/' + str(args.model_num)
-        
-        
+        log_file = os.path.join(args.log_dir, args.network_name, str(args.model_num))
+        model_dir = os.path.join(args.model_path, args.network_name, str(args.model_num))
+
         with tf.Session() as sess:
             # load model
             with open(model_dir + ".json", 'r') as json_file:
                 loaded_model_json = json_file.read()
                 q_network_online = model_from_json(loaded_model_json)
                 q_network_target = model_from_json(loaded_model_json)
-            
+
             sess.run(tf.global_variables_initializer())
 
             # load weights into model
             q_network_online.load_weights(model_dir + ".h5")
             q_network_target.load_weights(model_dir + ".h5")
-            
+
             dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions,
-                                 args.gamma, args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
-                                 args.experience_replay, args.repetition_times, args.network_name, args.max_grad, args.env, sess)
+                                 args.gamma, args.target_update_freq, args.num_burn_in, args.train_freq,
+                                 args.batch_size, \
+                                 args.experience_replay, args.repetition_times, args.network_name, args.max_grad,
+                                 args.env, sess)
 
             dqn_agent.evaluate(env, log_file, args.eval_num)
         exit(0)
@@ -262,16 +264,17 @@ def main():  # noqa: D103
     q_network_target = create_model(args.window, args.new_size, num_actions, args.network_name, False)
 
     # create output dir, meant to pop up error when dir exist to avoid over written
-    os.mkdir(args.output + "/" + args.network_name)
+    os.mkdir(os.path.join(args.output, args.network_name))
 
     with tf.Session() as sess:
         dqn_agent = DQNAgent((q_network_online, q_network_target), preprocessor, memory, policy, num_actions,
                              args.gamma, args.target_update_freq, args.num_burn_in, args.train_freq, args.batch_size, \
-                             args.experience_replay, args.repetition_times, args.network_name, args.max_grad, args.env, sess)
+                             args.experience_replay, args.repetition_times, args.network_name, args.max_grad, args.env,
+                             sess)
 
         optimizer = tf.train.AdamOptimizer(learning_rate=args.alpha)
         dqn_agent.compile(optimizer, mean_huber_loss)
-        dqn_agent.fit(env, args.num_iterations, args.output + '/' + args.network_name + '/', args.save_freq,
+        dqn_agent.fit(env, args.num_iterations, os.path.join(args.output, args.network_name), args.save_freq,
                       args.max_episode_length)
 
 
