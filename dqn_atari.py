@@ -181,7 +181,7 @@ def get_output_folder(parent_dir, env_name):
 def main():  # noqa: D103
     parser = argparse.ArgumentParser(description='Run DQN on Atari Breakout')
     parser.add_argument('--env', default='SpaceInvaders-v0', help='Atari env name')
-    parser.add_argument('--network_name', default='linear_q_network_double', type=str, help='Type of model to use')
+    parser.add_argument('--network_name', default='linear_q_network', type=str, help='Type of model to use')
     parser.add_argument('--window', default=4, type=int, help='how many frames are used each time')
     parser.add_argument('--new_size', default=(84, 84), type=tuple, help='new size')
     parser.add_argument('--batch_size', default=32, type=int, help='Batch size')
@@ -199,14 +199,14 @@ def main():  # noqa: D103
     parser.add_argument('--train_freq', default=4, type=int, help='Frequency for training')
     parser.add_argument('--repetition_times', default=3, type=int, help='Parameter for action repetition')
     parser.add_argument('-o', '--output', default='atari-v0', type=str, help='Directory to save data to')
-    parser.add_argument('--seed', default=1, type=int, help='Random seed')
-    parser.add_argument('--experience_replay', default=True, type=bool,
+    parser.add_argument('--seed', default=0, type=int, help='Random seed')
+    parser.add_argument('--experience_replay', default=False, type=bool,
                         help='Choose whether or not to use experience replay')
-    parser.add_argument('--train', default=False, type=bool, help='Train/Evaluate, set True if train the model')
-    parser.add_argument('--model_path', default='/media/hongbao/Study/Courses/10703/hw2/dlqn',
+    parser.add_argument('--train', default=True, type=bool, help='Train/Evaluate, set True if train the model')
+    parser.add_argument('--model_path', default='/media/hongbao/Study/Courses/10703/hw2/lqn_noexp',
                         type=str, help='specify model path to evaluation')
     parser.add_argument('--max_grad', default=1.0, type=float, help='Parameter for huber loss')
-    parser.add_argument('--model_num', default=3000000, type=int, help='specify saved model number during train')
+    parser.add_argument('--model_num', default=5000000, type=int, help='specify saved model number during train')
     parser.add_argument('--log_dir', default='log', type=str, help='specify log folder to save evaluate result')
     parser.add_argument('--eval_num', default=100, type=int, help='number of evaluation to run')
     parser.add_argument('--save_freq', default=100000, type=int, help='model save frequency')

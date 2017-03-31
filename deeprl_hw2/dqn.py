@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import os
 import gym
 from gym import wrappers
 import matplotlib.pyplot as plt
@@ -177,6 +178,10 @@ class DQNAgent:
                                                 feed_dict={self.state_target: next_states})
 
             added_vals = q_vals[np.arange(self.batch_size), actions]
+        elif not self.experience_replay:
+            # Calculating y values for no experience linear model
+            added_vals = self.gamma * np.max(self.sess.run(self.q_values_online, \
+                                                           feed_dict={self.state_online: next_states}), axis=1)
         else:
             # Calculating y values for q_network_deep and q_network_duel
             added_vals = self.gamma * np.max(self.sess.run(self.q_values_target, \
@@ -336,10 +341,11 @@ class DQNAgent:
                 if iter_t % save_freq == 0:
                     self.evaluate_no_render()
                     model_json = self.q_network_online.to_json()
-                    with open(os.path.join(output_folder, str(iter_t), ".json"), "w") as json_file:
+                    file_name = os.path.join(output_folder, str(iter_t) + ".json")
+                    with open(file_name, "w") as json_file:
                         json_file.write(model_json)
                         # serialize weights to HDF5
-                        self.q_network_online.save_weights(os.path.join(output_folder, str(iter_t), ".h5"))
+                        self.q_network_online.save_weights(os.path.join(output_folder, str(iter_t) + ".h5"))
                     print("Saved model to disk")
 
                 iter_t += 1
@@ -369,7 +375,7 @@ class DQNAgent:
                     break
 
                 # Time for updating (copy...) the target network
-                if iter_t % self.target_update_freq == 0:
+                if iter_t % self.target_update_freq == 0 and self.experience_replay:
                     get_hard_target_model_updates(self.q_network_target, self.q_network_online)
 
                 if iter_t % self.train_freq == 0:
