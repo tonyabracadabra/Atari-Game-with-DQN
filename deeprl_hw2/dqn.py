@@ -169,7 +169,7 @@ class DQNAgent:
 
     def _calc_y(self, next_states, rewards, not_terminal):
         y_vals = rewards
-        # Calculating y values for q_network double
+        # Calculating y values for deep q_network double
         if self.network_name is "deep_q_network_double" or self.network_name is "linear_q_network_double":
             actions = np.argmax(self.sess.run(self.q_values_online, \
                                               feed_dict={self.state_online: next_states}), axis=1)
@@ -183,7 +183,7 @@ class DQNAgent:
             added_vals = self.gamma * np.max(self.sess.run(self.q_values_online, \
                                                            feed_dict={self.state_online: next_states}), axis=1)
         else:
-            # Calculating y values for q_network_deep and q_network_duel
+            # Calculating y values for other models
             added_vals = self.gamma * np.max(self.sess.run(self.q_values_target, \
                                                            feed_dict={self.state_target: next_states}), axis=1)
 
@@ -304,6 +304,8 @@ class DQNAgent:
                 # Get current lives
                 curr_lives = env.env.ale.lives()
 
+                # check lives of agent, modify the original reward
+                # if die, give -5 reward, if earn life, earn 50 reward
                 if curr_lives < prev_lives:
                     life_terminal = True
                     reward = -5.0
@@ -312,6 +314,7 @@ class DQNAgent:
 
                 prev_lives = curr_lives
 
+                # get next state while appending current frame to the memory
                 next_state = self._append_to_memory(curr_state, action, next_frame, reward,
                                                     life_terminal or is_terminal)
                 
@@ -327,17 +330,14 @@ class DQNAgent:
         while iter_t < num_iterations:
             # Get the initial state
             env.reset()
-
             curr_state = self.init_state
             action, total_reward, action_count = 0, 0, 0
-
             episode_count += 1
-
-            # Get the initial lives
             prev_lives = env.env.ale.lives()
 
             print "Start " + str(episode_count) + "th Episode ..."
             for j in xrange(max_episode_length):
+                # save model
                 if iter_t % save_freq == 0:
                     self.evaluate_no_render()
                     model_json = self.q_network_online.to_json()
@@ -359,6 +359,7 @@ class DQNAgent:
                 life_terminal = False
                 curr_lives = env.env.ale.lives()
 
+                # update lives and reward correspondingly
                 if curr_lives < prev_lives:
                     life_terminal = True
                     reward = -5.0
@@ -368,7 +369,6 @@ class DQNAgent:
                 prev_lives = curr_lives
                 next_state = self._append_to_memory(curr_state, action, next_frame, reward,
                                                     life_terminal or is_terminal)
-
                 total_reward += reward
 
                 if is_terminal:
@@ -389,7 +389,12 @@ class DQNAgent:
             loss_val = self.update_policy()
             print str(episode_count) + "th Episode:\n" + "Reward: " + str(total_reward) + "\n Loss:" + str(loss_val)
 
+    #
     def evaluate_no_render(self):
+        """Test your agent with a provided environment.
+
+        Evaluate the model 20 times every 100,000 interactions in training
+        """
         num_episodes = 0
         env = gym.make(self.env_name)
 

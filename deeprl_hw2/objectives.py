@@ -28,9 +28,11 @@ def huber_loss(y_true, y_pred, max_grad=1.):
     delta = tf.abs(y_true - y_pred)
     default = tf.constant(0.0)
 
+    # boolean masks for less and higher than the threshold
     less_cond = tf.boolean_mask(delta, delta < max_grad)
     greater_cond = tf.boolean_mask(delta, delta >= max_grad)
 
+    # compute two parts value and concatenate them together
     less = 0.5 * tf.square(less_cond)
     greater = max_grad * greater_cond - 0.5 * max_grad * max_grad
 

@@ -107,6 +107,11 @@ def get_hard_target_model_updates(target, source):
 
 
 def get_init_state(env, preprocessor):
+    """ Return initial state of the network
+    :param env: environment of the game
+    :param preprocessor: preprocessor to process the frame
+    :return: network (game) initial state
+    """
     env.reset()
 
     init_state = np.stack(map(preprocessor.process_state_for_network, \

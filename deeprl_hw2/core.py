@@ -223,7 +223,7 @@ class ReplayMemory:
         self.prev_terminal = True
 
     def append(self, next_frame, action, reward, is_terminal):
-        # Maximizing over the previous frame
+        # Maximizing over the previous frame to remove flickering
         if self.prev_terminal:
             new_frame = np.maximum(next_frame, self.prev_frame)
             sample = Sample(new_frame, action, reward)
@@ -233,6 +233,7 @@ class ReplayMemory:
         self.prev_terminal = is_terminal
         self.prev_frame = next_frame
 
+        # use ring buffer to append data sample to memory
         if is_terminal:
             self._end_episode(self.index)
         elif self.index in self._terminal:
@@ -249,6 +250,12 @@ class ReplayMemory:
         self._terminal.add(final_index)
 
     def is_valid_index(self, x):
+        """
+        Check validation of a random selected index in the memory
+        the consecutive 4 frames start from x should not be terminal states
+        :param x: 
+        :return: boolean result of whether x is valid or not
+        """
         if self.index - 4 <= x <= self.index:
             return False
             
@@ -259,18 +266,20 @@ class ReplayMemory:
 
     def sample(self, batch_size, index=None):
         random_indexes = set()
+        # Select batch size valid indexes
         while len(random_indexes) < batch_size:
             new_random_indexes = random.sample(xrange(len(self._samples) - 4), batch_size - len(random_indexes))
             new_random_indexes = filter(self.is_valid_index, new_random_indexes)
             random_indexes = random_indexes.union(new_random_indexes)
 
+        # construct current states, next states, actions, rewards by stacking
+        # different fields of the samples together
         random_samples = []
         not_terminal = []
         for i in random_indexes:
             random_samples.append(self._samples[i:i + 5])
             not_terminal.append(False if i + 4 % self.max_size in self._terminal else True)
 
-        # print [len([i.frame for i in samples]) for samples in random_samples]
         states = np.stack([np.stack([s.frame / 255.0 for s in samples[:4]], axis=2) for samples in random_samples])
         next_states = np.stack([np.stack([s.frame / 255.0 for s in samples[1:]], axis=2) for samples in random_samples])
         actions = np.stack([s[-1].action for s in random_samples])
