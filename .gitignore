@@ -12,3 +12,5 @@ nohup*
 log/*
 
 .ipynb*
+
+*DS_Store
