@@ -4,9 +4,6 @@
 # idea folder
 .idea/*
 
-# output folder
-atari-v0*
-
 nohup*
 
 log/*
@@ -15,4 +12,4 @@ log/*
 
 *DS_Store
 
-papers/*
+data

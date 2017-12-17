@@ -1,11 +1,6 @@
 """RL Policy classes.
-
-We have provided you with a base policy class, some example
-implementations and some unimplemented classes that should be useful
-in your code.
 """
 import numpy as np
-import attr
 import random
 
 
