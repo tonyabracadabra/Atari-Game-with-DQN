@@ -1,0 +1,11 @@
+attrs
+gym
+h5py
+keras
+matplotlib
+numpy
+protobuf>=3.0
+pydot-ng
+scipy
+semver
+-e .
